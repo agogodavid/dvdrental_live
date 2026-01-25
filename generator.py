@@ -32,6 +32,7 @@ class DVDRentalDataGenerator:
         self.cursor = None
         self.db_name = config.get('database', 'dvdrental_live')
         self.seasonal_drift = 0.0  # Percentage change in transaction volume (-100 to 100+)
+        self.churned_customers = set()  # Track permanently churned customers
         
     def connect(self):
         """Establish MySQL connection"""
@@ -476,8 +477,8 @@ class DVDRentalDataGenerator:
         self.conn.commit()
     
     def get_active_customers(self, week_number: int) -> List[int]:
-        """Get customers active in this week (considering churn)"""
-        # Churn: 40% after 5 weeks, 15% loyal throughout
+        """Get customers active in this week (considering permanent churn)"""
+        # Churn: 40% of customers churn permanently after 5 weeks, 15% are always loyal
         # Exception: First 8 weeks are ramp-up period with no churn (allow customer base to build)
         
         self.cursor.execute("""
@@ -493,21 +494,28 @@ class DVDRentalDataGenerator:
             if days_since_creation is None:
                 continue
             
+            # Skip permanently churned customers
+            if customer_id in self.churned_customers:
+                continue
+            
             weeks_since_creation = days_since_creation // 7
             
             # First 8 weeks: ramp-up period, accept ALL customers (no churn)
             if week_number <= 8:
                 active.append(customer_id)
-            # After week 8: apply churn logic
+            # After week 8: apply permanent churn logic
             else:
                 # 15% of customers are always loyal
                 if random.random() < 0.15:
                     active.append(customer_id)
-                # After 5 weeks from creation, 40% churn out
+                # After 5 weeks from creation, 40% permanently churn out
                 elif weeks_since_creation < 5:
                     active.append(customer_id)
-                elif random.random() > 0.4:  # 60% stay after 5 weeks
+                elif random.random() > 0.4:  # 60% stay, 40% churn
                     active.append(customer_id)
+                else:
+                    # Mark as permanently churned
+                    self.churned_customers.add(customer_id)
         
         return active
     
