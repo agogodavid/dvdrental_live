@@ -169,14 +169,19 @@ def run_initial_setup(mysql_config: dict) -> Tuple[int, int]:
         initial_inventory = generator.cursor.fetchone()[0]
         logger.info(f"✓ Initial inventory created: {initial_inventory} items")
         
+        # Generate initial rental transactions (~12 weeks)
+        logger.info("Generating initial rental transactions...")
+        initial_weeks = 12
+        generator.generate_weeks(initial_weeks, start_date=SimulationConfig.START_DATE)
+        
         # Count initial transactions
         generator.cursor.execute("SELECT COUNT(*) FROM rental")
         initial_rentals = generator.cursor.fetchone()[0]
-        logger.info(f"✓ Initial transactions created: {initial_rentals} rentals")
+        logger.info(f"✓ Initial transactions created: {initial_rentals} rentals over {initial_weeks} weeks")
         
         generator.disconnect()
         
-        return 12, initial_inventory  # Generator creates ~12 weeks by default
+        return initial_weeks, initial_inventory
         
     except Exception as e:
         logger.error(f"Failed to run initial setup: {e}")
