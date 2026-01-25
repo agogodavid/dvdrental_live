@@ -478,6 +478,7 @@ class DVDRentalDataGenerator:
     def get_active_customers(self, week_number: int) -> List[int]:
         """Get customers active in this week (considering churn)"""
         # Churn: 40% after 5 weeks, 15% loyal throughout
+        # Exception: First 8 weeks are ramp-up period with no churn (allow customer base to build)
         
         self.cursor.execute("""
             SELECT customer_id, DATEDIFF(CURDATE(), create_date) as days_since_creation
@@ -494,14 +495,19 @@ class DVDRentalDataGenerator:
             
             weeks_since_creation = days_since_creation // 7
             
-            # 15% of customers are always loyal
-            if random.random() < 0.15:
+            # First 8 weeks: ramp-up period, accept ALL customers (no churn)
+            if week_number <= 8:
                 active.append(customer_id)
-            # After 5 weeks, 40% churn out
-            elif weeks_since_creation < 5:
-                active.append(customer_id)
-            elif random.random() > 0.4:  # 60% stay after 5 weeks
-                active.append(customer_id)
+            # After week 8: apply churn logic
+            else:
+                # 15% of customers are always loyal
+                if random.random() < 0.15:
+                    active.append(customer_id)
+                # After 5 weeks from creation, 40% churn out
+                elif weeks_since_creation < 5:
+                    active.append(customer_id)
+                elif random.random() > 0.4:  # 60% stay after 5 weeks
+                    active.append(customer_id)
         
         return active
     
