@@ -326,6 +326,11 @@ def main():
     config = load_config(override_database=override_database)
     mysql_config = config['mysql']
     
+    # Create database if it doesn't exist (required for CLI overrides)
+    if not create_database_if_needed(mysql_config):
+        logger.error("Failed to create database. Exiting.")
+        sys.exit(1)
+    
     display_simulation_plan()
     
     try:
