@@ -588,7 +588,7 @@ def generate_film_title(category: str) -> Tuple[str, str, str]:
     return title, description, rating
 
 
-def add_film_batch(mysql_config: dict, num_films: int, category_focus: str = None, description: str = "") -> int:
+def add_film_batch(mysql_config: dict, num_films: int, category_focus: str = None, description: str = "", sim_date: date = None) -> int:
     """Add new films to the database with inventory copies"""
     try:
         import random
@@ -648,7 +648,8 @@ def add_film_batch(mysql_config: dict, num_films: int, category_focus: str = Non
         
         # Generate and add films
         films_added = 0
-        today = datetime.now().date()
+        film_date = sim_date if sim_date else datetime.now().date()
+        film_year = film_date.year
         
         for _ in range(num_films):
             category_choice = category_focus or random.choice(list(FILM_TEMPLATES.keys()))
@@ -659,7 +660,7 @@ def add_film_batch(mysql_config: dict, num_films: int, category_focus: str = Non
             length = random.randint(template["length_range"][0], template["length_range"][1])
             cost = round(random.uniform(template["cost_range"][0], template["cost_range"][1]), 2)
             rental_rate = round(cost * 0.2, 2)  # 20% of cost as rental rate
-            release_year = datetime.now().year
+            release_year = film_year
             
             # Insert film
             cursor.execute("""
@@ -850,7 +851,7 @@ def main():
             if has_films and num_films > 0:
                 current_date = SimulationConfig.START_DATE + timedelta(weeks=current_sim_week)
                 logger.info(f"\n🎬 Week {current_sim_week} ({current_date}): {film_desc}")
-                add_film_batch(mysql_config, num_films, category, film_desc)
+                add_film_batch(mysql_config, num_films, category, film_desc, sim_date=current_date)
             
             # Check for inventory additions
             should_add, qty, desc = get_inventory_additions_for_week(current_sim_week)

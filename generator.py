@@ -34,6 +34,14 @@ class DVDRentalDataGenerator:
         self.seasonal_drift = 0.0  # Percentage change in transaction volume (-100 to 100+)
         self.churned_customers = set()  # Track permanently churned customers
         
+        # Parse start_date from config
+        start_date_str = config.get('simulation', {}).get('start_date', '2001-10-01')
+        if isinstance(start_date_str, str):
+            from datetime import datetime as dt
+            self.start_date = dt.strptime(start_date_str, '%Y-%m-%d').date()
+        else:
+            self.start_date = start_date_str
+        
     def connect(self):
         """Establish MySQL connection"""
         try:
@@ -305,6 +313,9 @@ class DVDRentalDataGenerator:
         self.cursor.execute("SELECT staff_id FROM staff")
         staff_ids = [row[0] for row in self.cursor.fetchall()]
         
+        # Use start_date from config for initial inventory
+        purchase_date = self.start_date
+        
         # Create multiple copies of each film per store
         inventory = []
         for film_id in film_ids:
@@ -312,7 +323,7 @@ class DVDRentalDataGenerator:
                 # 2-5 copies per film per store
                 for _ in range(random.randint(2, 5)):
                     staff_id = random.choice(staff_ids) if staff_ids else 1
-                    inventory.append((film_id, store_id, self.start_date, staff_id))
+                    inventory.append((film_id, store_id, purchase_date, staff_id))
         
         self.cursor.executemany(
             "INSERT INTO inventory (film_id, store_id, date_purchased, staff_id) VALUES (%s, %s, %s, %s)",
@@ -463,7 +474,7 @@ class DVDRentalDataGenerator:
         first_names = ['James', 'Mary', 'Robert', 'Patricia', 'Michael', 'Linda', 'William', 'Barbara']
         last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis']
         
-        create_date = datetime.now().date() - timedelta(weeks=8-week_number)
+        create_date = self.start_date + timedelta(weeks=week_number-1)
         
         for i in range(count):
             store_id = random.choice(store_ids)
@@ -651,9 +662,9 @@ class DVDRentalDataGenerator:
     
     def generate_weeks(self, num_weeks: int, start_date=None):
         """Generate transaction data for multiple weeks"""
-        # Use provided start_date or default to 8 weeks ago (rounded to Monday)
+        # Use provided start_date or default to self.start_date from config
         if start_date is None:
-            start_date = datetime.now().date() - timedelta(weeks=8)
+            start_date = self.start_date
         
         # Ensure start_date is a date object
         if isinstance(start_date, str):
