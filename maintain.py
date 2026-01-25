@@ -264,46 +264,88 @@ class DatabaseMaintenance:
             logger.error(f"Error creating backup: {e}")
     
     def show_growth_metrics(self):
-        """Show business growth metrics"""
+        """Show business growth metrics with detailed week information"""
         logger.info("\nGrowth Metrics")
-        logger.info("=" * 50)
+        logger.info("=" * 80)
         
         try:
-            # Weekly transaction growth
+            # Get overall date range and metrics
             self.cursor.execute("""
                 SELECT 
+                    MIN(rental_date) as start_date,
+                    MAX(rental_date) as end_date,
+                    COUNT(*) as total_transactions,
+                    COUNT(DISTINCT customer_id) as total_customers,
+                    COUNT(DISTINCT WEEK(rental_date)) as total_weeks
+                FROM rental
+            """)
+            
+            start_date, end_date, total_transactions, total_customers, total_weeks = self.cursor.fetchone()
+            
+            if not start_date:
+                logger.info("  No rental data found")
+                logger.info("=" * 80)
+                return
+            
+            # Display metadata
+            logger.info(f"\nDataset Overview:")
+            logger.info(f"  Date Range:        {start_date.strftime('%d %b %Y')} to {end_date.strftime('%d %b %Y')}")
+            logger.info(f"  Total Weeks:       {total_weeks}")
+            logger.info(f"  Total Transactions: {total_transactions:,}")
+            logger.info(f"  Total Customers:   {total_customers:,}")
+            logger.info(f"  Avg Transactions/Week: {total_transactions // max(total_weeks, 1):,}")
+            logger.info(f"  Avg Customers/Week: {total_customers // max(total_weeks, 1):,}")
+            
+            # Weekly transaction details
+            logger.info(f"\n{'Week':<6} {'Dates':<20} {'Transactions':<15} {'Customers':<12} {'Avg/Day':<10}")
+            logger.info("-" * 80)
+            
+            self.cursor.execute("""
+                SELECT 
+                    YEAR(rental_date) as year,
                     WEEK(rental_date) as week,
+                    MIN(DATE(rental_date)) as week_start,
+                    MAX(DATE(rental_date)) as week_end,
                     COUNT(*) as transactions,
                     COUNT(DISTINCT customer_id) as unique_customers
                 FROM rental
-                GROUP BY WEEK(rental_date)
-                ORDER BY week DESC
-                LIMIT 5
+                GROUP BY YEAR(rental_date), WEEK(rental_date)
+                ORDER BY YEAR(rental_date), WEEK(rental_date)
             """)
             
-            logger.info("  Recent Weeks (Latest First):")
-            for week, transactions, customers in reversed(self.cursor.fetchall()):
-                logger.info(f"    Week {week}: {transactions:>5} transactions, {customers:>4} customers")
+            week_data = self.cursor.fetchall()
+            for year, week, week_start, week_end, transactions, customers in week_data:
+                # Format date range (e.g., "7-13 Apr")
+                start_fmt = week_start.strftime('%d')
+                if week_start.month == week_end.month:
+                    date_range = f"{start_fmt}-{week_end.strftime('%d %b')}"
+                else:
+                    date_range = f"{start_fmt} {week_start.strftime('%b')}-{week_end.strftime('%d %b')}"
+                
+                avg_per_day = transactions // max((week_end - week_start).days + 1, 1)
+                logger.info(f"  {week:<4} {date_range:<20} {transactions:<15,} {customers:<12} {avg_per_day:<10}")
             
-            # Customer growth
-            self.cursor.execute("""
-                SELECT 
-                    WEEK(create_date) as week,
-                    COUNT(*) as new_customers
-                FROM customer
-                GROUP BY WEEK(create_date)
-                ORDER BY week DESC
-                LIMIT 5
-            """)
+            # Trend analysis
+            logger.info("\n" + "-" * 80)
+            logger.info("Growth Analysis:")
             
-            logger.info("  New Customers (Latest First):")
-            for week, count in reversed(self.cursor.fetchall()):
-                logger.info(f"    Week {week}: {count:>3} new customers")
+            if len(week_data) >= 2:
+                first_week_transactions = week_data[0][4]
+                last_week_transactions = week_data[-1][4]
+                growth_percent = ((last_week_transactions - first_week_transactions) / max(first_week_transactions, 1)) * 100
+                logger.info(f"  First Week Transactions: {first_week_transactions:,}")
+                logger.info(f"  Latest Week Transactions: {last_week_transactions:,}")
+                logger.info(f"  Growth: {growth_percent:+.1f}%")
+                
+                # Calculate average weekly growth
+                if len(week_data) > 1:
+                    avg_growth = growth_percent / (len(week_data) - 1)
+                    logger.info(f"  Avg Weekly Growth: {avg_growth:+.1f}%")
+            
+            logger.info("=" * 80)
             
         except Error as e:
             logger.error(f"Error getting metrics: {e}")
-        
-        logger.info("=" * 50)
 
 
 def main():
