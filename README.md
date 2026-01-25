@@ -77,7 +77,31 @@ python incremental_update.py
 
 # Add 4 weeks
 python incremental_update.py 4
+
+# Add 4 weeks with 50% seasonal increase (holiday season)
+python incremental_update.py 4 --seasonal 50
+
+# Add 4 weeks with 50% seasonal decrease (summer slump)
+python incremental_update.py 4 --seasonal -50
 ```
+
+#### Seasonal Drift Argument
+
+The `--seasonal` argument lets you adjust transaction volume for seasonal effects:
+
+```bash
+python incremental_update.py <num_weeks> --seasonal <percent>
+```
+
+- `50` = 50% increase in transaction volume
+- `-50` = 50% decrease in transaction volume
+- `0` = no change (default)
+
+**Example scenarios:**
+- Holiday season: `--seasonal 75`
+- Summer slump: `--seasonal -40`
+- New marketing campaign: `--seasonal 25`
+- Store closure: `--seasonal -90`
 
 ## Database Schema
 
@@ -228,6 +252,32 @@ No active customers in week
 2. Run `incremental_update.py` weekly to keep data fresh
 3. Monitor transaction patterns in your analytics
 4. Adjust `config.json` parameters based on your needs
+
+## Recent Changes
+
+### Fixed: Database Connection Issue
+- **Issue**: `incremental_update.py` would fail with "No database selected" error
+- **Fix**: Updated `generator.py` `connect()` method to include `database` parameter in MySQL connection string
+- **Impact**: `incremental_update.py` and `advanced_incremental_update.py` now work correctly
+- **Files Modified**: `generator.py` (line ~33-45)
+
+### New Feature: Seasonal Drift for Transaction Volume
+- **Feature**: Add `--seasonal` argument to `incremental_update.py` to simulate seasonal demand changes
+- **Usage**: `python incremental_update.py 4 --seasonal 50` for 50% increase
+- **Examples**:
+  - Holiday season: `--seasonal 75`
+  - Summer slump: `--seasonal -40`
+  - Store closure: `--seasonal -90`
+- **How it works**: Multiplies expected transaction volume by (1 + seasonal_drift/100)
+- **Files Modified**: 
+  - `incremental_update.py` (main() and add_incremental_week() functions)
+  - `generator.py` (DVDRentalDataGenerator class and add_week_of_transactions() method)
+
+### Added: Advanced Tracking System
+- **Location**: `/advanced_tracking/` subfolder
+- **Features**: Late fee calculation, inventory status tracking, customer AR management
+- **Components**: 7 files with 1,304 lines of code + 2,200+ lines of documentation
+- **See**: [advanced_tracking/README.md](advanced_tracking/README.md) for details
 
 ## License
 
