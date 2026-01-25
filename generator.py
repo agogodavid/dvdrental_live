@@ -30,6 +30,7 @@ class DVDRentalDataGenerator:
         self.conn = None
         self.cursor = None
         self.db_name = config.get('database', 'dvdrental_live')
+        self.seasonal_drift = 0.0  # Percentage change in transaction volume (-100 to 100+)
         
     def connect(self):
         """Establish MySQL connection"""
@@ -379,7 +380,12 @@ class DVDRentalDataGenerator:
         # Calculate transaction volume
         base_volume = 500
         volume_growth = 1 + (week_number * 0.02)  # 2% growth per week
-        expected_transactions = int(base_volume * volume_growth)
+        seasonal_factor = 1 + (self.seasonal_drift / 100)  # Convert percentage to multiplier
+        expected_transactions = int(base_volume * volume_growth * seasonal_factor)
+        
+        logger.info(f"Base volume: {base_volume}, Growth: {volume_growth:.2f}x, "
+                   f"Seasonal: {seasonal_factor:.2f}x ({self.seasonal_drift:+.1f}%), "
+                   f"Total expected: {expected_transactions}")
         
         # Get day distribution for this week
         day_distribution = self.get_week_day_distribution(week_number)

@@ -32,12 +32,20 @@ def get_next_week_number(cursor) -> int:
         return 1
 
 
-def add_incremental_week(config_file='config.json', num_weeks: int = 1):
-    """Add incremental weeks to the database"""
+def add_incremental_week(config_file='config.json', num_weeks: int = 1, seasonal_drift: float = 0.0):
+    """Add incremental weeks to the database
+    
+    Args:
+        config_file: Path to config.json
+        num_weeks: Number of weeks to add
+        seasonal_drift: Percentage change in transaction volume (-100 to 100+)
+                       e.g., 50 = 50% increase, -50 = 50% decrease
+    """
     config = load_config(config_file)
     mysql_config = config['mysql']
     
     generator = DVDRentalDataGenerator(mysql_config)
+    generator.seasonal_drift = seasonal_drift
     
     try:
         generator.connect()
@@ -97,14 +105,34 @@ def add_incremental_week(config_file='config.json', num_weeks: int = 1):
 def main():
     """Main function"""
     num_weeks = 1
-    if len(sys.argv) > 1:
-        try:
-            num_weeks = int(sys.argv[1])
-        except ValueError:
-            logger.error("Usage: python incremental_update.py [num_weeks]")
-            sys.exit(1)
+    seasonal_drift = 0.0
     
-    add_incremental_week(num_weeks=num_weeks)
+    # Parse arguments
+    i = 1
+    while i < len(sys.argv):
+        arg = sys.argv[i]
+        
+        if arg == '--seasonal' and i + 1 < len(sys.argv):
+            try:
+                seasonal_drift = float(sys.argv[i + 1])
+                i += 2
+            except ValueError:
+                logger.error("--seasonal requires a numeric value (e.g., 50 or -50)")
+                sys.exit(1)
+        else:
+            try:
+                num_weeks = int(arg)
+                i += 1
+            except ValueError:
+                logger.error("Usage: python incremental_update.py [num_weeks] [--seasonal PERCENT]")
+                logger.error("  Examples:")
+                logger.error("    python incremental_update.py 4")
+                logger.error("    python incremental_update.py 4 --seasonal 50")
+                logger.error("    python incremental_update.py 4 --seasonal -50")
+                sys.exit(1)
+    
+    logger.info(f"Adding {num_weeks} weeks with seasonal drift: {seasonal_drift:+.1f}%")
+    add_incremental_week(num_weeks=num_weeks, seasonal_drift=seasonal_drift)
 
 
 if __name__ == '__main__':
