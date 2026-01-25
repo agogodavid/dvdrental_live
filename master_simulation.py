@@ -18,7 +18,7 @@ from mysql.connector import Error
 import json
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Dict, List, Tuple
 
 logging.basicConfig(
