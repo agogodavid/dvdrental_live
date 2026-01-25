@@ -47,31 +47,43 @@ def add_incremental_week(config_file='config.json', num_weeks: int = 1):
         active_customers = generator.cursor.fetchone()[0]
         
         generator.cursor.execute("SELECT MAX(rental_date) FROM rental")
-        last_rental = generator.cursor.fetchone()[0]
+        last_rental_row = generator.cursor.fetchone()
         
-        if last_rental:
-            logger.info(f"Last rental date: {last_rental}")
-            next_week_start = last_rental.date() + __import__('datetime').timedelta(days=1)
-            next_week_start = next_week_start - __import__('datetime').timedelta(
-                days=next_week_start.weekday()
-            )
-        else:
+        if not last_rental_row or not last_rental_row[0]:
             logger.warning("No existing rentals found. Use generator.py for initial setup.")
             return
+        
+        last_rental = last_rental_row[0]
+        logger.info(f"Last rental date: {last_rental}")
+        
+        # Calculate next week start (move last_rental to next Monday)
+        from datetime import timedelta, datetime
+        
+        if isinstance(last_rental, str):
+            last_rental = datetime.strptime(last_rental, '%Y-%m-%d %H:%M:%S')
+        
+        # Get the date part and round to next Monday
+        last_date = last_rental.date() if hasattr(last_rental, 'date') else last_rental
+        next_week_start = last_date + timedelta(days=1)
+        next_week_start = next_week_start - timedelta(days=next_week_start.weekday())  # Move to Monday
         
         logger.info(f"Adding {num_weeks} weeks starting from {next_week_start}")
         logger.info(f"Current active customers: {active_customers}")
         
-        # Generate the new weeks
-        from datetime import timedelta
-        for i in range(num_weeks):
-            week_start = next_week_start + timedelta(weeks=i)
-            # Calculate week number based on weeks since start
-            generator.cursor.execute("SELECT MIN(rental_date) FROM rental")
-            min_date = generator.cursor.fetchone()[0]
-            if min_date:
-                weeks_elapsed = (week_start - min_date.date()).days // 7
-                generator.add_week_of_transactions(week_start, weeks_elapsed + 1)
+        # Calculate week numbers based on weeks since start of simulation
+        generator.cursor.execute("SELECT MIN(rental_date) FROM rental")
+        min_rental = generator.cursor.fetchone()[0]
+        
+        if min_rental:
+            start_date = min_rental.date() if hasattr(min_rental, 'date') else min_rental
+            weeks_since_start = (next_week_start - start_date).days // 7
+            
+            # Add new weeks
+            for i in range(num_weeks):
+                week_start = next_week_start + timedelta(weeks=i)
+                week_number = weeks_since_start + i + 1
+                logger.info(f"Generating week {week_number}...")
+                generator.add_week_of_transactions(week_start, week_number)
         
         logger.info(f"Successfully added {num_weeks} weeks of transaction data")
         

@@ -5,8 +5,11 @@
     "password": "root",
     "database": "dvdrental_live"
   },
+  "simulation": {
+    "start_date": "2025-12-30",
+    "initial_weeks": 12
+  },
   "generation": {
-    "initial_weeks": 12,
     "films_count": 100,
     "stores_count": 2,
     "initial_customers": 50,

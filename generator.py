@@ -583,11 +583,19 @@ class DVDRentalDataGenerator:
         self.create_inventory()
         logger.info("Database initialized and seeded successfully")
     
-    def generate_weeks(self, num_weeks: int):
+    def generate_weeks(self, num_weeks: int, start_date=None):
         """Generate transaction data for multiple weeks"""
-        # Start date: 8 weeks ago
-        start_date = datetime.now().date() - timedelta(weeks=8)
-        start_date = start_date - timedelta(days=start_date.weekday())  # Move to Monday
+        # Use provided start_date or default to 8 weeks ago (rounded to Monday)
+        if start_date is None:
+            start_date = datetime.now().date() - timedelta(weeks=8)
+        
+        # Ensure start_date is a date object
+        if isinstance(start_date, str):
+            from datetime import datetime as dt
+            start_date = dt.strptime(start_date, '%Y-%m-%d').date()
+        
+        # Move to Monday if not already
+        start_date = start_date - timedelta(days=start_date.weekday())
         
         for week_num in range(1, num_weeks + 1):
             week_start = start_date + timedelta(weeks=week_num - 1)
@@ -601,28 +609,34 @@ def main():
     try:
         with open(config_file, 'r') as f:
             config_data = json.load(f)
-            config = config_data.get('mysql', {})
-            if 'database' not in config:
-                config['database'] = 'dvdrental_live'
+            mysql_config = config_data.get('mysql', {})
+            if 'database' not in mysql_config:
+                mysql_config['database'] = 'dvdrental_live'
+            
+            simulation_config = config_data.get('simulation', {})
+            start_date = simulation_config.get('start_date')
+            initial_weeks = simulation_config.get('initial_weeks', 12)
     except FileNotFoundError:
         logger.error(f"Configuration file {config_file} not found")
         logger.info("Using default configuration...")
-        config = {
+        mysql_config = {
             'host': 'localhost',
             'user': 'root',
             'password': 'root',
             'database': 'dvdrental_live'
         }
+        start_date = None
+        initial_weeks = 12
     
-    generator = DVDRentalDataGenerator(config)
+    generator = DVDRentalDataGenerator(mysql_config)
     
     try:
         generator.connect()
         generator.initialize_and_seed()
         
-        # Generate data for 12 weeks
-        logger.info("Generating transaction data...")
-        generator.generate_weeks(12)
+        # Generate data for configured number of weeks
+        logger.info(f"Generating {initial_weeks} weeks of transaction data...")
+        generator.generate_weeks(initial_weeks, start_date)
         
         logger.info("Database initialization complete!")
         
