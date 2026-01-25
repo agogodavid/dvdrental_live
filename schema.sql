@@ -142,7 +142,7 @@ CREATE TABLE inventory (
     last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (film_id) REFERENCES film(film_id),
     FOREIGN KEY (store_id) REFERENCES store(store_id),
-    UNIQUE KEY ux_inventory_film_store (film_id, store_id)
+    INDEX idx_film_store (film_id, store_id)
 ) ENGINE=InnoDB;
 
 -- Rental Table
