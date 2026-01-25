@@ -139,10 +139,12 @@ CREATE TABLE inventory (
     inventory_id INT AUTO_INCREMENT PRIMARY KEY,
     film_id INT NOT NULL,
     store_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (film_id) REFERENCES film(film_id),
     FOREIGN KEY (store_id) REFERENCES store(store_id),
-    INDEX idx_film_store (film_id, store_id)
+    INDEX idx_film_store (film_id, store_id),
+    INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB;
 
 -- Rental Table

@@ -12,6 +12,7 @@ Generates realistic transaction data with business patterns:
 import mysql.connector
 from mysql.connector import Error
 import random
+import math
 from datetime import datetime, timedelta
 from typing import List, Tuple, Dict
 import json
@@ -508,7 +509,10 @@ class DVDRentalDataGenerator:
                             inventory_ids: List[int], staff_ids: List[int]) -> Tuple:
         """Generate a single rental transaction"""
         customer_id = random.choice(customers)
-        inventory_id = random.choice(inventory_ids)
+        # Use weighted selection - newer inventory more likely to be rented
+        inventory_id = self._get_weighted_inventory_id()
+        if not inventory_id:
+            inventory_id = random.choice(inventory_ids)  # Fallback
         staff_id = random.choice(staff_ids)
         
         # Rental duration 3-7 days, with bias towards shorter periods
@@ -574,6 +578,42 @@ class DVDRentalDataGenerator:
         """Get all inventory IDs"""
         self.cursor.execute("SELECT inventory_id FROM inventory")
         return [row[0] for row in self.cursor.fetchall()]
+    
+    def _get_weighted_inventory_id(self) -> int:
+        """
+        Get a weighted random inventory ID where newer inventory is more likely to be rented.
+        Uses exponential weighting: newer items have higher probability.
+        """
+        # Get all inventory with creation times
+        self.cursor.execute("""
+            SELECT inventory_id, created_at
+            FROM inventory
+            ORDER BY created_at DESC
+        """)
+        inventory_data = self.cursor.fetchall()
+        
+        if not inventory_data:
+            return None
+        
+        # Calculate weights: newer items get higher weight
+        # Weight = e^(age_rank / total_items * 3) to create exponential distribution
+        weights = []
+        total = len(inventory_data)
+        
+        for rank in range(total):
+            # Newer items (lower rank) get higher weight
+            weight = math.exp(-rank / max(1, total / 3))
+            weights.append(weight)
+        
+        # Normalize weights
+        total_weight = sum(weights)
+        normalized_weights = [w / total_weight for w in weights]
+        
+        # Select inventory based on weights
+        inventory_ids = [item[0] for item in inventory_data]
+        selected_id = random.choices(inventory_ids, weights=normalized_weights, k=1)[0]
+        
+        return selected_id
     
     def _get_all_staff_ids(self) -> List[int]:
         """Get all staff IDs"""

@@ -1,6 +1,9 @@
 """
 Incremental update script for DVD Rental Database
 Run this script to add new weeks of transaction data
+
+NOTE: This script automatically uses all available inventory in the database.
+To add more inventory before running this, use inventory_manager.py
 """
 
 import sys
