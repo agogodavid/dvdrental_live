@@ -16,10 +16,16 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 
-def load_config(config_file='config.json'):
-    """Load configuration from JSON file"""
+def load_config(config_file='config.json', override_database=None):
+    """Load configuration from JSON file with optional database override"""
     with open(config_file, 'r') as f:
-        return json.load(f)
+        config = json.load(f)
+    
+    if override_database:
+        config['mysql']['database'] = override_database
+        logger.info(f"Database override: {override_database}")
+    
+    return config
 
 
 def get_next_week_number(cursor) -> int:
@@ -109,6 +115,7 @@ def main():
     """Main function"""
     num_weeks = 1
     seasonal_drift = 0.0
+    override_database = None
     
     # Parse arguments
     i = 1
@@ -122,20 +129,25 @@ def main():
             except ValueError:
                 logger.error("--seasonal requires a numeric value (e.g., 50 or -50)")
                 sys.exit(1)
+        elif arg == '--database' and i + 1 < len(sys.argv):
+            override_database = sys.argv[i + 1]
+            i += 2
         else:
             try:
                 num_weeks = int(arg)
                 i += 1
             except ValueError:
-                logger.error("Usage: python incremental_update.py [num_weeks] [--seasonal PERCENT]")
+                logger.error("Usage: python incremental_update.py [num_weeks] [--seasonal PERCENT] [--database DB_NAME]")
                 logger.error("  Examples:")
                 logger.error("    python incremental_update.py 4")
                 logger.error("    python incremental_update.py 4 --seasonal 50")
-                logger.error("    python incremental_update.py 4 --seasonal -50")
+                logger.error("    python incremental_update.py 4 --database dvdrental_group_a")
+                logger.error("    python incremental_update.py 4 --seasonal -50 --database dvdrental_group_b")
                 sys.exit(1)
     
     logger.info(f"Adding {num_weeks} weeks with seasonal drift: {seasonal_drift:+.1f}%")
-    add_incremental_week(num_weeks=num_weeks, seasonal_drift=seasonal_drift)
+    config = load_config(override_database=override_database)
+    add_incremental_week(config['mysql'], num_weeks=num_weeks, seasonal_drift=seasonal_drift)
 
 
 if __name__ == '__main__':

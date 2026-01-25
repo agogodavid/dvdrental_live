@@ -36,12 +36,18 @@ RENTAL_DURATION_DEFAULT = 7   # days
 class AdvancedTrackingManager:
     """Manages advanced tracking tables independently."""
     
-    def __init__(self, config_path: str = CONFIG_FILE):
+    def __init__(self, config_path: str = CONFIG_FILE, override_database: str = None):
         """Initialize connection and load configuration."""
         with open(config_path, 'r') as f:
             self.config = json.load(f)
         
         self.db_config = self.config['mysql']
+        
+        # Apply database override if specified
+        if override_database:
+            self.db_config['database'] = override_database
+            print(f"Database override: {override_database}")
+        
         self.conn = None
         self.cursor = None
         self._connect()
@@ -711,6 +717,11 @@ def main():
         default=CONFIG_FILE,
         help=f'Config file path (default: {CONFIG_FILE})'
     )
+    parser.add_argument(
+        '--database',
+        default=None,
+        help='Override database name (e.g., dvdrental_group_a)'
+    )
     
     args = parser.parse_args()
     
@@ -719,7 +730,7 @@ def main():
         args.init = True
         args.update = True
     
-    manager = AdvancedTrackingManager(args.config)
+    manager = AdvancedTrackingManager(args.config, override_database=args.database)
     
     try:
         if args.init:
