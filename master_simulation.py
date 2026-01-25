@@ -108,6 +108,44 @@ def week_number_for_date(date: datetime.date, start_date: datetime.date) -> int:
     return (date - start_date).days // 7
 
 
+def create_database_if_needed(mysql_config: dict) -> bool:
+    """
+    Create the database if it doesn't exist
+    
+    Returns:
+        True if database created or already exists, False on error
+    """
+    try:
+        # Connect to MySQL without specifying database
+        conn = mysql.connector.connect(
+            host=mysql_config['host'],
+            user=mysql_config['user'],
+            password=mysql_config['password']
+        )
+        cursor = conn.cursor()
+        
+        db_name = mysql_config['database']
+        
+        # Check if database exists
+        cursor.execute("SHOW DATABASES LIKE %s", (db_name,))
+        exists = cursor.fetchone() is not None
+        
+        if not exists:
+            logger.info(f"Creating database '{db_name}'...")
+            cursor.execute(f"CREATE DATABASE `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+            logger.info(f"✓ Database '{db_name}' created successfully")
+        else:
+            logger.info(f"Database '{db_name}' already exists, using existing database")
+        
+        cursor.close()
+        conn.close()
+        return True
+        
+    except Error as e:
+        logger.error(f"Error creating database: {e}")
+        return False
+
+
 def run_initial_setup(mysql_config: dict) -> Tuple[int, int]:
     """
     Run initial database setup using generator.py
