@@ -23,9 +23,9 @@ def load_config(config_file='config.json'):
 
 
 class DatabaseMaintenance:
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, database_override: str = None):
         self.config = config['mysql']
-        self.db_name = self.config['database']
+        self.db_name = database_override or self.config['database']
         self.conn = None
         self.cursor = None
     
@@ -354,7 +354,7 @@ def main():
         print("""
 Database Maintenance Utilities
 
-Usage: python maintain.py <command>
+Usage: python maintain.py <command> [database_name]
 
 Commands:
   stats      - Show database statistics
@@ -370,8 +370,28 @@ Commands:
     
     command = sys.argv[1].lower()
     config = load_config()
+    default_db = config['mysql']['database']
     
-    maintenance = DatabaseMaintenance(config)
+    # Ask user which database to use
+    print(f"\n📊 Database Maintenance Tool\n")
+    print(f"Default database (from config): {default_db}")
+    print("\nOptions:")
+    print(f"  1) Use default database: {default_db}")
+    print(f"  2) Use a different database")
+    
+    choice = input("\nSelect option (1 or 2): ").strip()
+    
+    if choice == '2':
+        database_override = input("Enter database name: ").strip()
+        if not database_override:
+            logger.error("Database name cannot be empty")
+            sys.exit(1)
+        print(f"\n✓ Using database: {database_override}\n")
+    else:
+        database_override = None
+        print(f"\n✓ Using default database: {default_db}\n")
+    
+    maintenance = DatabaseMaintenance(config, database_override)
     
     try:
         maintenance.connect()

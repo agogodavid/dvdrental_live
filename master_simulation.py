@@ -58,6 +58,24 @@ class SimulationConfig:
         # ... continue pattern ...
     ]
     
+    # Film Releases (adds new films to catalog)
+    # Format: (week_number, num_films, category_focus, description)
+    FILM_RELEASES = [
+        (0, 0, None, "Initial catalog loaded by generator"),
+        (8, 3, "Action", "Q4 2001 - Action blockbusters"),
+        (16, 3, "Comedy", "Q1 2002 - Comedy releases"),
+        (26, 4, "Drama", "Q2 2002 - Award-worthy dramas"),
+        (36, 3, "Horror", "Q3 2002 - Summer scares"),
+        (48, 4, "Romance", "Q4 2002 - Holiday romances"),
+        (60, 3, "Sci-Fi", "Q1 2003 - Sci-Fi adventures"),
+        (72, 3, "Animation", "Q2 2003 - Animated features"),
+        (84, 4, "Action", "Q3 2003 - Summer action"),
+        (100, 3, "Family", "Q4 2003 - Holiday family films"),
+        # Uncomment and extend for 10+ year simulation:
+        # (112, 3, "Thriller", "Q1 2004 - Thriller releases"),
+        # (124, 3, "Comedy", "Q2 2004 - Comedy hits"),
+    ]
+    
     # Seasonal demand multipliers by month
     # 1=January, 12=December
     SEASONAL_MULTIPLIERS = {
@@ -261,6 +279,408 @@ def add_inventory_batch(mysql_config: dict, quantity: int, description: str, dat
         return 0
 
 
+# ============================================================================
+# FILM GENERATION SYSTEM - Generate realistic film titles by category
+# ============================================================================
+
+FILM_TEMPLATES = {
+    "Action": {
+        "titles": [
+            "The {adjective} Agent", "Mission: {location}", "Operation {name}",
+            "Escape from {location}", "The {adjective} Warrior", "Hunt for {name}",
+            "Raid on {location}", "The {adjective} Soldier", "Assault {location}",
+            "The {adjective} Commando", "Strike Force {name}", "Combat {location}",
+            "Siege of {location}", "The {adjective} Pursuit", "Midnight {name}",
+            "The Last {name}", "Maximum {adjective}", "Extreme {name}",
+            "The {adjective} Siege", "Operation Exodus", "The Final {name}"
+        ],
+        "adjectives": ["Last", "Final", "Ultimate", "Greatest", "Deadliest", "Fastest", "Bravest", "Wildest"],
+        "locations": ["Tokyo", "Berlin", "Moscow", "Bangkok", "Istanbul", "Cairo", "Rio", "Vegas"],
+        "names": ["Vendetta", "Retribution", "Reckoning", "Justice", "Thunder", "Inferno", "Phoenix", "Reborn"],
+        "descriptions": [
+            "An elite agent must stop a dangerous criminal mastermind",
+            "A former soldier returns for one final mission",
+            "Special forces mount a desperate rescue operation",
+            "A lone warrior battles an international conspiracy",
+            "A skilled operative infiltrates enemy territory"
+        ],
+        "rating_dist": [("PG-13", 0.4), ("R", 0.6)],
+        "length_range": (90, 130),
+        "cost_range": (15, 25)
+    },
+    
+    "Comedy": {
+        "titles": [
+            "The {adjective} {noun}", "{adjective} Love", "Mr. {name}",
+            "Crazy {name}", "The {adjective} Plan", "Love at {location}",
+            "Office {adjective}", "The {name} Chronicles", "{name} Goes {location}",
+            "Mistaken {noun}", "The {adjective} Wedding", "Speed {noun}",
+            "Four {adjective} Friends", "The {location} {noun}", "A {adjective} Affair",
+            "Little {name}", "Big {name}", "Zany {noun}", "{adjective} Business"
+        ],
+        "adjectives": ["Crazy", "Silly", "Angry","Hilarious", "Funny", "Awkward", "Wild", "Stupid", "Mad", "Bizarre"],
+        "nouns": ["Dating", "Dates", "Weddings", "Vacation", "Holidays", "Office", "School", "Family"],
+        "locations": ["in Paris", "in New York", "in Vegas", "in LA", "Down Under", "in Lagos","in Nairobi"],
+        "names": ["Marco", "Lucy", "Sophie", "Charlie", "Sam", "Alex"],
+        "descriptions": [
+            "A bumbling hero stumbles through misadventures",
+            "Three friends try to navigate modern romance",
+            "An ordinary person finds themselves in extraordinary situations",
+            "A workplace comedy with hilarious mishaps",
+            "Friends reunite for a disastrous vacation"
+        ],
+        "rating_dist": [("G", 0.1), ("PG", 0.3), ("PG-13", 0.4), ("R", 0.2)],
+        "length_range": (85, 110),
+        "cost_range": (14, 20)
+    },
+    
+    "Drama": {
+        "titles": [
+            "The {noun} of {name}", "When {name} {verb}", "A {adjective} Love",
+            "The {name} Years", "Before {name}", "After {noun}",
+            "Letters to {name}", "The {adjective} Heart", "Echoes of {noun}",
+            "A Thousand {noun}", "The Burden of {noun}", "{name}'s Choice",
+            "The Path to {noun}", "A Single {noun}", "The Weight of {noun}",
+            "In the Shadow of {noun}", "The Price of {noun}", "Redemption"
+        ],
+        "adjectives": ["Broken", "Silent", "Beautiful", "Distant", "Fragile", "Hidden", "Lost", "Timeless"],
+        "nouns": ["Souls", "Hearts", "Dreams", "Tears", "Secrets", "Memories", "Choices", "Promises"],
+        "verbs": ["Falls", "Waits", "Returns", "Rises", "Fades"],
+        "names": ["Sarah", "Michael", "Grace", "David", "Claire", "James"],
+        "descriptions": [
+            "A powerful story of love and loss spanning decades",
+            "Two people discover themselves through unexpected connection",
+            "A journey of self-discovery and redemption",
+            "Family secrets threaten to tear them apart",
+            "A powerful examination of human resilience"
+        ],
+        "rating_dist": [("PG", 0.2), ("PG-13", 0.4), ("R", 0.4)],
+        "length_range": (100, 145),
+        "cost_range": (16, 24)
+    },
+    
+    "Horror": {
+        "titles": [
+            "The {noun} in {location}", "{name} Returns", "The {adjective} {noun}",
+            "Curse of the {noun}", "The {noun} Awakens", "Dark {noun}",
+            "Nightmare at {location}", "The {adjective} Dead", "Evil {noun}",
+            "The {noun} from {location}", "Haunted {noun}", "Possession",
+            "The Last {noun}", "Shadows {verb}", "The {adjective} Entity",
+            "Something {adjective}", "{noun} Rising"
+        ],
+        "adjectives": ["Cursed", "Haunted", "Possessed", "Deadly", "Dark", "Evil", "Wicked", "Satanic"],
+        "nouns": ["House", "Curse", "Entity", "Demon", "Spirit", "Creature", "Evil", "Darkness"],
+        "locations": ["the Asylum", "the Cemetery", "the Mansion", "the Hospital", "the Village"],
+        "verbs": ["awakens", "rises", "emerges", "hunts"],
+        "names": ["Annabelle", "Exorcism", "Poltergeist"],
+        "descriptions": [
+            "A group of friends find themselves trapped in a nightmare",
+            "An ancient curse is awakened with terrifying consequences",
+            "Supernatural forces hunt the inhabitants of an old house",
+            "A demonic presence tests the limits of human sanity",
+            "Things that should stay buried refuse to rest"
+        ],
+        "rating_dist": [("PG-13", 0.2), ("R", 0.8)],
+        "length_range": (85, 120),
+        "cost_range": (15, 22)
+    },
+    
+    "Romance": {
+        "titles": [
+            "Love in {location}", "{name} and {name2}", "The {adjective} Heart",
+            "Eternal {noun}", "A {noun} Romance", "Second {noun}",
+            "When Hearts {verb}", "Love After {noun}", "A {adjective} Proposal",
+            "Kisses in {location}", "{name}'s Love", "The {adjective} Wedding",
+            "A {noun} Story", "Meant to Be", "Against All {noun}",
+            "Love Will {verb}", "The {noun} of Life"
+        ],
+        "adjectives": ["True", "Eternal", "Second", "Perfect", "Sweet", "Tender", "Pure", "Unforgettable"],
+        "nouns": ["Love", "Chance", "Dream", "Fate", "Destiny", "Promise", "Hope", "Wishes"],
+        "locations": ["Paris", "Rome", "Venice", "Barcelona", "the Beach", "the Mountains"],
+        "verbs": ["Meet", "Collide", "Ignite"],
+        "names": ["Emma", "Jack", "Sophie", "Marcus", "Grace", "Adam"],
+        "names2": ["Lucas", "Nina", "Daniel", "Claire"],
+        "descriptions": [
+            "Two strangers discover an unexpected connection",
+            "A second chance at love when they need it most",
+            "Passion ignites between two unlikely souls",
+            "Love conquers all obstacles and doubts",
+            "A romance that transcends time and circumstance"
+        ],
+        "rating_dist": [("PG", 0.2), ("PG-13", 0.6), ("R", 0.2)],
+        "length_range": (95, 130),
+        "cost_range": (14, 22)
+    },
+    
+    "Sci-Fi": {
+        "titles": [
+            "The Future of {noun}", "{name} Protocol", "Quantum {noun}",
+            "The Last {noun}", "Star {name}", "Beyond {location}",
+            "The {adjective} Frontier", "Time {verb}", "Android {noun}",
+            "The {noun} War", "Cyber {name}", "The {noun} Horizon",
+            "Dimension {name}", "Code {noun}", "The {noun} Experiment",
+            "Genesis {noun}", "The {adjective} Planet"
+        ],
+        "adjectives": ["Final", "Unknown", "Last", "Secret", "Hidden", "Infinite", "Parallel", "Alternate"],
+        "nouns": ["Protocol", "Wars", "Colonies", "Experiments", "Encounters", "Worlds", "Systems", "Dimensions"],
+        "locations": ["Mars", "Venus", "Andromeda", "the Future", "the Past"],
+        "verbs": ["Warp", "Jump", "Shift", "Loop"],
+        "names": ["Nexus", "Genesis", "Omega", "Alpha", "Phoenix"],
+        "descriptions": [
+            "Humanity discovers it is not alone in the universe",
+            "A mission to save Earth from extinction",
+            "Artificial intelligence challenges human supremacy",
+            "Time travel creates dangerous paradoxes",
+            "Explorers venture into unknown dimensions"
+        ],
+        "rating_dist": [("PG", 0.1), ("PG-13", 0.6), ("R", 0.3)],
+        "length_range": (105, 145),
+        "cost_range": (17, 26)
+    },
+    
+    "Animation": {
+        "titles": [
+            "The Adventures of {name}", "{name}'s Quest", "The {adjective} {noun}",
+            "Journey to {location}", "{name} and Friends", "The {noun} Kingdom",
+            "Tales of {location}", "The Legend of {name}", "The {adjective} Treasure",
+            "Magic in {location}", "The Secret of {noun}", "{name}'s Big Adventure",
+            "The {noun} Chronicles", "Legends of {location}", "The {noun} Returns"
+        ],
+        "adjectives": ["Amazing", "Magical", "Legendary", "Secret", "Hidden", "Lost", "Ancient", "Enchanted"],
+        "nouns": ["Dragon", "Kingdom", "Quest", "Adventure", "Mystery", "Treasure", "Heroes", "Champions"],
+        "locations": ["Atlantica", "Wonderland", "the Far East", "the Enchanted Forest", "the Mystic Land"],
+        "names": ["Zephyr", "Aurora", "Kai", "Luna", "Blaze", "Crystal"],
+        "descriptions": [
+            "A young hero discovers their magical destiny",
+            "Friends embark on an epic adventure",
+            "A magical kingdom faces its greatest threat",
+            "An outcast finds where they truly belong",
+            "Animated adventure with heart and humor"
+        ],
+        "rating_dist": [("G", 0.6), ("PG", 0.4)],
+        "length_range": (80, 120),
+        "cost_range": (18, 25)
+    },
+    
+    "Family": {
+        "titles": [
+            "The {adjective} {noun}", "{name}'s Christmas", "A {noun} Adventure",
+            "The {noun} Lesson", "{name} Learns {noun}", "Family {noun}",
+            "The Big {noun}", "{name}'s Journey", "A {adjective} Birthday",
+            "The {noun} Challenge", "Together {verb}", "The {adjective} Surprise",
+            "Our {noun} Story", "The {noun} of Home"
+        ],
+        "adjectives": ["Wonderful", "Special", "Amazing", "Perfect", "Greatest", "Precious", "Lucky", "Magical"],
+        "nouns": ["Adventure", "Christmas", "Vacation", "Holiday", "Birthday", "Lesson", "Journey", "Story"],
+        "verbs": ["Forever", "Always", "As One"],
+        "names": ["Ollie", "Lily", "Tommy", "Sophie", "Max", "Annie"],
+        "descriptions": [
+            "A heartwarming tale about family bonds",
+            "Children learn valuable lessons through adventure",
+            "A holiday story the whole family will enjoy",
+            "An adventure that brings a family closer",
+            "A feel-good story celebrating togetherness"
+        ],
+        "rating_dist": [("G", 0.8), ("PG", 0.2)],
+        "length_range": (80, 100),
+        "cost_range": (14, 20)
+    },
+    
+    "Thriller": {
+        "titles": [
+            "The {noun} Conspiracy", "Edge of {noun}", "The {adjective} Target",
+            "{name} Protocol", "Silent {noun}", "The {noun} Game",
+            "Deception {name}", "The {adjective} Hunt", "Lethal {noun}",
+            "The {noun} Threat", "Hidden Agenda", "The {noun} Lies",
+            "Zero {noun}", "The {adjective} Truth"
+        ],
+        "adjectives": ["Deadly", "Fatal", "Dangerous", "Hidden", "Secret", "Dark", "Twisted", "Shocking"],
+        "nouns": ["Conspiracy", "Lies", "Truth", "Deception", "Threat", "Game", "Code", "Evidence"],
+        "names": ["Nexus", "Cipher", "Black", "Shadow", "Eclipse"],
+        "descriptions": [
+            "A detective races against time to stop a killer",
+            "Nothing is what it seems in this twisted tale",
+            "A conspiracy threatens to destroy everything",
+            "One woman must uncover a dangerous truth",
+            "Suspense and betrayal at every turn"
+        ],
+        "rating_dist": [("PG-13", 0.3), ("R", 0.7)],
+        "length_range": (95, 130),
+        "cost_range": (15, 23)
+    }
+}
+
+
+def generate_film_title(category: str) -> Tuple[str, str, str]:
+    """
+    Generate a realistic film title, description, and rating based on category
+    Returns: (title, description, rating)
+    """
+    import random
+    
+    if category not in FILM_TEMPLATES:
+        category = "Drama"
+    
+    template = FILM_TEMPLATES[category]
+    
+    # Choose a title template
+    title_template = random.choice(template["titles"])
+    
+    # Build the title by replacing placeholders
+    title = title_template
+    
+    if "{adjective}" in title:
+        title = title.replace("{adjective}", random.choice(template["adjectives"]))
+    if "{noun}" in title:
+        title = title.replace("{noun}", random.choice(template["nouns"]))
+    if "{location}" in title:
+        title = title.replace("{location}", random.choice(template["locations"]))
+    if "{verb}" in title:
+        title = title.replace("{verb}", random.choice(template["verbs"]))
+    if "{name}" in title and "name2" not in template:
+        title = title.replace("{name}", random.choice(template.get("names", ["Unknown"])))
+    if "{name}" in title and "{name2}" in template:
+        title = title.replace("{name}", random.choice(template.get("names", ["Unknown"])))
+    if "{name2}" in title:
+        title = title.replace("{name2}", random.choice(template.get("names2", ["Unknown"])))
+    
+    # Choose description
+    description = random.choice(template["descriptions"])
+    
+    # Choose rating
+    rating_choices = template["rating_dist"]
+    rating = random.choices([r[0] for r in rating_choices], weights=[r[1] for r in rating_choices])[0]
+    
+    return title, description, rating
+
+
+def add_film_batch(mysql_config: dict, num_films: int, category_focus: str = None, description: str = "") -> int:
+    """Add new films to the database with inventory copies"""
+    try:
+        import random
+        
+        conn = mysql.connector.connect(
+            host=mysql_config['host'],
+            user=mysql_config['user'],
+            password=mysql_config['password'],
+            database=mysql_config['database']
+        )
+        cursor = conn.cursor()
+        
+        # Get language_id for English
+        cursor.execute("SELECT language_id FROM language WHERE name = 'English' LIMIT 1")
+        lang_result = cursor.fetchone()
+        language_id = lang_result[0] if lang_result else 1
+        
+        # Get or create categories
+        if category_focus:
+            cursor.execute("SELECT category_id FROM category WHERE name = %s", (category_focus,))
+            cat_result = cursor.fetchone()
+            if cat_result:
+                categories = [cat_result[0]]
+            else:
+                # Create category if it doesn't exist
+                cursor.execute("INSERT INTO category (name) VALUES (%s)", (category_focus,))
+                conn.commit()
+                categories = [cursor.lastrowid]
+        else:
+            cursor.execute("SELECT category_id FROM category")
+            categories = [row[0] for row in cursor.fetchall()]
+        
+        if not categories:
+            logger.warning("No categories available")
+            cursor.close()
+            conn.close()
+            return 0
+        
+        # Get stores for inventory
+        cursor.execute("SELECT DISTINCT store_id FROM store")
+        store_ids = [row[0] for row in cursor.fetchall()]
+        
+        # Get staff for inventory
+        cursor.execute("SELECT DISTINCT staff_id FROM staff WHERE active = TRUE")
+        staff_ids = [row[0] for row in cursor.fetchall()]
+        if not staff_ids:
+            cursor.execute("SELECT DISTINCT staff_id FROM staff LIMIT 1")
+            staff_row = cursor.fetchone()
+            if staff_row:
+                staff_ids = [staff_row[0]]
+        
+        if not store_ids or not staff_ids:
+            logger.warning("Missing stores or staff")
+            cursor.close()
+            conn.close()
+            return 0
+        
+        # Generate and add films
+        films_added = 0
+        today = datetime.now().date()
+        
+        for _ in range(num_films):
+            category_choice = category_focus or random.choice(list(FILM_TEMPLATES.keys()))
+            title, desc, rating = generate_film_title(category_choice)
+            
+            # Get template for this category
+            template = FILM_TEMPLATES.get(category_choice, FILM_TEMPLATES["Drama"])
+            length = random.randint(template["length_range"][0], template["length_range"][1])
+            cost = round(random.uniform(template["cost_range"][0], template["cost_range"][1]), 2)
+            rental_rate = round(cost * 0.2, 2)  # 20% of cost as rental rate
+            release_year = datetime.now().year
+            
+            # Insert film
+            cursor.execute("""
+                INSERT INTO film (title, description, release_year, language_id, 
+                                 rental_duration, rental_rate, length, replacement_cost, rating)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (title, desc, release_year, language_id, 3, rental_rate, length, cost, rating))
+            
+            film_id = cursor.lastrowid
+            
+            # Link to category
+            category_id = random.choice(categories)
+            cursor.execute("""
+                INSERT INTO film_category (film_id, category_id)
+                VALUES (%s, %s)
+            """, (film_id, category_id))
+            
+            # Add inventory copies to stores
+            inventory = []
+            for store_id in store_ids:
+                # Add 2-3 copies per store
+                for _ in range(random.randint(2, 3)):
+                    staff_id = random.choice(staff_ids)
+                    inventory.append((film_id, store_id, today, staff_id))
+            
+            cursor.executemany(
+                "INSERT INTO inventory (film_id, store_id, date_purchased, staff_id) VALUES (%s, %s, %s, %s)",
+                inventory
+            )
+            
+            films_added += 1
+        
+        conn.commit()
+        
+        logger.info(f"✓ Added {films_added} new films - {description}")
+        logger.info(f"  • Category focus: {category_focus or 'Mixed'}")
+        logger.info(f"  • Total inventory copies added: {films_added * len(store_ids) * 2}-{films_added * len(store_ids) * 3}")
+        
+        cursor.close()
+        conn.close()
+        return films_added
+        
+    except Exception as e:
+        logger.error(f"Failed to add films: {e}")
+        return 0
+
+
+def get_film_releases_for_week(week_num: int) -> Tuple[bool, int, str, str]:
+    """Check if there's a film release scheduled for this week"""
+    for week, num_films, category_focus, desc in SimulationConfig.FILM_RELEASES:
+        if week == week_num:
+            return True, num_films, category_focus, desc
+    return False, 0, None, ""
+
+
 def add_incremental_weeks(mysql_config: dict, num_weeks: int, seasonal_drift: float = 0.0) -> int:
     """
     Add incremental weeks of transactions
@@ -331,10 +751,17 @@ def display_simulation_plan():
     logger.info(f"Duration: {SimulationConfig.TOTAL_WEEKS} weeks (~{SimulationConfig.TOTAL_WEEKS / 52:.1f} years)")
     end_date = SimulationConfig.START_DATE + timedelta(weeks=SimulationConfig.TOTAL_WEEKS)
     logger.info(f"End Date: {end_date}")
+    
     logger.info(f"\nInventory Additions Schedule:")
     for week, qty, desc in SimulationConfig.INVENTORY_ADDITIONS:
         date = SimulationConfig.START_DATE + timedelta(weeks=week)
         logger.info(f"  Week {week:3d} ({date}): +{qty:3d} items - {desc}")
+    
+    logger.info(f"\nFilm Releases Schedule:")
+    for week, num_films, category, desc in SimulationConfig.FILM_RELEASES:
+        date = SimulationConfig.START_DATE + timedelta(weeks=week)
+        logger.info(f"  Week {week:3d} ({date}): +{num_films:d} films ({category or 'Mixed'}) - {desc}")
+    
     logger.info("=" * 80 + "\n")
 
 
@@ -382,8 +809,16 @@ def main():
         total_inventory_added = 0
         
         while weeks_added < remaining_weeks:
-            # Check for inventory additions
+            # Check for film releases
             current_sim_week = current_week + weeks_added
+            has_films, num_films, category, film_desc = get_film_releases_for_week(current_sim_week)
+            
+            if has_films and num_films > 0:
+                current_date = SimulationConfig.START_DATE + timedelta(weeks=current_sim_week)
+                logger.info(f"\n🎬 Week {current_sim_week} ({current_date}): {film_desc}")
+                add_film_batch(mysql_config, num_films, category, film_desc)
+            
+            # Check for inventory additions
             should_add, qty, desc = get_inventory_additions_for_week(current_sim_week)
             
             if should_add and qty > 0:
