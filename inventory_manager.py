@@ -132,12 +132,19 @@ class InventoryManager:
             logger.error(f"Error retrieving inventory: {e}")
             raise
     
-    def add_fixed_quantity(self, quantity: int):
+    def add_fixed_quantity(self, quantity: int, date_purchased=None, staff_id=None):
         """Add fixed number of items across all films and stores"""
         logger.info(f"\n📦 Strategy: Add {quantity:,} items")
         logger.info("Distribution: Random across all films and stores")
         
         try:
+            from datetime import date as date_class
+            import random
+            
+            # Use provided date or today's date
+            if date_purchased is None:
+                date_purchased = date_class.today()
+            
             # Get all films and stores
             self.cursor.execute("SELECT DISTINCT film_id FROM film")
             film_ids = [row[0] for row in self.cursor.fetchall()]
@@ -145,24 +152,41 @@ class InventoryManager:
             self.cursor.execute("SELECT DISTINCT store_id FROM store")
             store_ids = [row[0] for row in self.cursor.fetchall()]
             
+            # Get staff for stores or use random staff
+            if staff_id is None:
+                self.cursor.execute("SELECT DISTINCT staff_id FROM staff WHERE active = TRUE")
+                staff_ids = [row[0] for row in self.cursor.fetchall()]
+                if not staff_ids:
+                    self.cursor.execute("SELECT DISTINCT staff_id FROM staff LIMIT 1")
+                    staff_row = self.cursor.fetchone()
+                    if staff_row:
+                        staff_ids = [staff_row[0]]
+                    else:
+                        logger.error("No staff members found in database")
+                        return 0
+            else:
+                staff_ids = [staff_id]
+            
             if not film_ids or not store_ids:
                 logger.error("No films or stores found in database")
                 return 0
             
-            # Create inventory items
-            import random
+            # Create inventory items with new columns
             inventory = []
             for _ in range(quantity):
                 film_id = random.choice(film_ids)
                 store_id = random.choice(store_ids)
-                inventory.append((film_id, store_id))
+                assigned_staff_id = random.choice(staff_ids) if len(staff_ids) > 1 else staff_ids[0]
+                inventory.append((film_id, store_id, date_purchased, assigned_staff_id))
             
             self.cursor.executemany(
-                "INSERT INTO inventory (film_id, store_id) VALUES (%s, %s)",
+                "INSERT INTO inventory (film_id, store_id, date_purchased, staff_id) VALUES (%s, %s, %s, %s)",
                 inventory
             )
             self.conn.commit()
             logger.info(f"✓ Added {len(inventory):,} inventory items")
+            logger.info(f"  • Date purchased: {date_purchased}")
+            logger.info(f"  • Staff member(s): {len(set([inv[3] for inv in inventory]))} different staff")
             return len(inventory)
             
         except Error as e:
@@ -170,7 +194,7 @@ class InventoryManager:
             self.conn.rollback()
             return 0
     
-    def add_percentage_growth(self, percentage: float):
+    def add_percentage_growth(self, percentage: float, date_purchased=None, staff_id=None):
         """Add inventory as percentage of current inventory"""
         logger.info(f"\n📦 Strategy: Grow inventory by {percentage:+.1f}%")
         
@@ -187,22 +211,44 @@ class InventoryManager:
             logger.info(f"Current inventory: {current_count:,}")
             logger.info(f"Adding {quantity:,} items ({percentage:+.1f}%)")
             
-            return self.add_fixed_quantity(quantity)
+            return self.add_fixed_quantity(quantity, date_purchased, staff_id)
             
         except Error as e:
             logger.error(f"Error calculating growth: {e}")
             return 0
     
-    def add_per_film_copies(self, copies: int):
+    def add_per_film_copies(self, copies: int, date_purchased=None, staff_id=None):
         """Add fixed number of copies for each film in each store"""
         logger.info(f"\n📦 Strategy: Add {copies} copies per film per store")
         
         try:
+            from datetime import date as date_class
+            import random
+            
+            # Use provided date or today's date
+            if date_purchased is None:
+                date_purchased = date_class.today()
+            
             self.cursor.execute("SELECT DISTINCT film_id FROM film")
             film_ids = [row[0] for row in self.cursor.fetchall()]
             
             self.cursor.execute("SELECT DISTINCT store_id FROM store")
             store_ids = [row[0] for row in self.cursor.fetchall()]
+            
+            # Get staff for stores
+            if staff_id is None:
+                self.cursor.execute("SELECT DISTINCT staff_id FROM staff WHERE active = TRUE")
+                staff_ids = [row[0] for row in self.cursor.fetchall()]
+                if not staff_ids:
+                    self.cursor.execute("SELECT DISTINCT staff_id FROM staff LIMIT 1")
+                    staff_row = self.cursor.fetchone()
+                    if staff_row:
+                        staff_ids = [staff_row[0]]
+                    else:
+                        logger.error("No staff members found in database")
+                        return 0
+            else:
+                staff_ids = [staff_id]
             
             if not film_ids or not store_ids:
                 logger.error("No films or stores found")
@@ -212,16 +258,19 @@ class InventoryManager:
             for film_id in film_ids:
                 for store_id in store_ids:
                     for _ in range(copies):
-                        inventory.append((film_id, store_id))
+                        assigned_staff_id = random.choice(staff_ids) if len(staff_ids) > 1 else staff_ids[0]
+                        inventory.append((film_id, store_id, date_purchased, assigned_staff_id))
             
             self.cursor.executemany(
-                "INSERT INTO inventory (film_id, store_id) VALUES (%s, %s)",
+                "INSERT INTO inventory (film_id, store_id, date_purchased, staff_id) VALUES (%s, %s, %s, %s)",
                 inventory
             )
             self.conn.commit()
             
             logger.info(f"✓ Added {len(inventory):,} inventory items")
             logger.info(f"  • {len(film_ids)} films × {len(store_ids)} stores × {copies} copies")
+            logger.info(f"  • Date purchased: {date_purchased}")
+            logger.info(f"  • Staff member(s): {len(set([inv[3] for inv in inventory]))} different staff")
             return len(inventory)
             
         except Error as e:
@@ -229,11 +278,18 @@ class InventoryManager:
             self.conn.rollback()
             return 0
     
-    def add_popular_films_only(self, copies_per_film: int, num_films: int):
+    def add_popular_films_only(self, copies_per_film: int, num_films: int, date_purchased=None, staff_id=None):
         """Add copies only for most popular films"""
         logger.info(f"\n📦 Strategy: Add {copies_per_film} copies for top {num_films} popular films")
         
         try:
+            from datetime import date as date_class
+            import random
+            
+            # Use provided date or today's date
+            if date_purchased is None:
+                date_purchased = date_class.today()
+            
             # Get most rented films
             self.cursor.execute("""
                 SELECT f.film_id, COUNT(r.rental_id) as rental_count
@@ -250,20 +306,38 @@ class InventoryManager:
             self.cursor.execute("SELECT DISTINCT store_id FROM store")
             store_ids = [row[0] for row in self.cursor.fetchall()]
             
+            # Get staff for stores
+            if staff_id is None:
+                self.cursor.execute("SELECT DISTINCT staff_id FROM staff WHERE active = TRUE")
+                staff_ids = [row[0] for row in self.cursor.fetchall()]
+                if not staff_ids:
+                    self.cursor.execute("SELECT DISTINCT staff_id FROM staff LIMIT 1")
+                    staff_row = self.cursor.fetchone()
+                    if staff_row:
+                        staff_ids = [staff_row[0]]
+                    else:
+                        logger.error("No staff members found in database")
+                        return 0
+            else:
+                staff_ids = [staff_id]
+            
             inventory = []
             for film_id in popular_films:
                 for store_id in store_ids:
                     for _ in range(copies_per_film):
-                        inventory.append((film_id, store_id))
+                        assigned_staff_id = random.choice(staff_ids) if len(staff_ids) > 1 else staff_ids[0]
+                        inventory.append((film_id, store_id, date_purchased, assigned_staff_id))
             
             self.cursor.executemany(
-                "INSERT INTO inventory (film_id, store_id) VALUES (%s, %s)",
+                "INSERT INTO inventory (film_id, store_id, date_purchased, staff_id) VALUES (%s, %s, %s, %s)",
                 inventory
             )
             self.conn.commit()
             
             logger.info(f"✓ Added {len(inventory):,} inventory items")
             logger.info(f"  • Top {len(popular_films)} films × {len(store_ids)} stores × {copies_per_film} copies")
+            logger.info(f"  • Date purchased: {date_purchased}")
+            logger.info(f"  • Staff member(s): {len(set([inv[3] for inv in inventory]))} different staff")
             return len(inventory)
             
         except Error as e:

@@ -188,10 +188,11 @@ def run_initial_setup(mysql_config: dict) -> Tuple[int, int]:
         raise
 
 
-def add_inventory_batch(mysql_config: dict, quantity: int, description: str) -> int:
+def add_inventory_batch(mysql_config: dict, quantity: int, description: str, date_purchased=None, staff_id=None) -> int:
     """Add inventory using inventory_manager logic"""
     try:
         import random
+        from datetime import date as date_class
         
         conn = mysql.connector.connect(
             host=mysql_config['host'],
@@ -201,6 +202,10 @@ def add_inventory_batch(mysql_config: dict, quantity: int, description: str) -> 
         )
         cursor = conn.cursor()
         
+        # Use provided date or today's date
+        if date_purchased is None:
+            date_purchased = date_class.today()
+        
         # Get all films and stores
         cursor.execute("SELECT DISTINCT film_id FROM film")
         film_ids = [row[0] for row in cursor.fetchall()]
@@ -208,21 +213,39 @@ def add_inventory_batch(mysql_config: dict, quantity: int, description: str) -> 
         cursor.execute("SELECT DISTINCT store_id FROM store")
         store_ids = [row[0] for row in cursor.fetchall()]
         
+        # Get staff if not provided
+        if staff_id is None:
+            cursor.execute("SELECT DISTINCT staff_id FROM staff WHERE active = TRUE")
+            staff_ids = [row[0] for row in cursor.fetchall()]
+            if not staff_ids:
+                cursor.execute("SELECT DISTINCT staff_id FROM staff LIMIT 1")
+                staff_row = cursor.fetchone()
+                if staff_row:
+                    staff_ids = [staff_row[0]]
+                else:
+                    logger.warning("No staff members found, cannot add inventory")
+                    cursor.close()
+                    conn.close()
+                    return 0
+        else:
+            staff_ids = [staff_id]
+        
         if not film_ids or not store_ids:
             logger.warning("No films or stores found")
             cursor.close()
             conn.close()
             return 0
         
-        # Create inventory items
+        # Create inventory items with new columns
         inventory = []
         for _ in range(quantity):
             film_id = random.choice(film_ids)
             store_id = random.choice(store_ids)
-            inventory.append((film_id, store_id))
+            assigned_staff_id = random.choice(staff_ids) if len(staff_ids) > 1 else staff_ids[0]
+            inventory.append((film_id, store_id, date_purchased, assigned_staff_id))
         
         cursor.executemany(
-            "INSERT INTO inventory (film_id, store_id) VALUES (%s, %s)",
+            "INSERT INTO inventory (film_id, store_id, date_purchased, staff_id) VALUES (%s, %s, %s, %s)",
             inventory
         )
         conn.commit()
