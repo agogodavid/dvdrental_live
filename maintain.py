@@ -62,6 +62,8 @@ class DatabaseMaintenance:
             for table in tables:
                 try:
                     self.cursor.execute(f"OPTIMIZE TABLE {table}")
+                    # Consume the result set from OPTIMIZE TABLE
+                    self.cursor.fetchall()
                     logger.info(f"  ✓ Optimized {table}")
                 except Error:
                     pass  # Table might not exist
@@ -83,6 +85,8 @@ class DatabaseMaintenance:
             for table in tables:
                 try:
                     self.cursor.execute(f"ANALYZE TABLE {table}")
+                    # Consume the result set from ANALYZE TABLE
+                    self.cursor.fetchall()
                     logger.info(f"  ✓ Analyzed {table}")
                 except Error:
                     pass
