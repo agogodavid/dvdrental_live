@@ -14,6 +14,23 @@ Done. You now have 3 years of realistic DVD rental data.
 
 ---
 
+## Keep Your Existing Database Safe
+
+Don't want to use your current `dvdrental_live` database? Create a new one:
+
+```bash
+python master_simulation.py dvdrental_simulation
+```
+
+✅ All credentials from config.json (host, user, password)  
+✅ Only database name is different (`dvdrental_simulation`)  
+✅ Original database stays untouched  
+✅ No config.json changes needed  
+
+See [MASTER_SIMULATION_DB_OVERRIDE_CHEATSHEET.md](MASTER_SIMULATION_DB_OVERRIDE_CHEATSHEET.md) for details.
+
+---
+
 ## Want 10 Years Instead?
 
 ### 1. Edit the file

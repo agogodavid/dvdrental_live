@@ -76,10 +76,25 @@ class SimulationConfig:
     }
 
 
-def load_config(config_file='config.json') -> dict:
-    """Load MySQL configuration"""
+def load_config(config_file='config.json', override_database=None) -> dict:
+    """Load MySQL configuration
+    
+    Args:
+        config_file: Path to config.json file
+        override_database: Optional database name to override config.json setting
+    
+    Returns:
+        Configuration dict with optional database override applied
+    """
     with open(config_file, 'r') as f:
-        return json.load(f)
+        config = json.load(f)
+    
+    # Override database name if provided
+    if override_database:
+        config['mysql']['database'] = override_database
+        logger.info(f"Using database: {override_database} (overriding config.json)")
+    
+    return config
 
 
 def get_seasonal_drift(date: datetime.date) -> float:
@@ -264,7 +279,13 @@ def main():
     logger.info("║" + " MASTER DVD RENTAL SIMULATION - 3 Year Data Generation ".center(78) + "║")
     logger.info("╚" + "═" * 78 + "╝")
     
-    config = load_config()
+    # Parse command-line arguments
+    override_database = None
+    if len(sys.argv) > 1:
+        override_database = sys.argv[1]
+        logger.info(f"Database override: {override_database}")
+    
+    config = load_config(override_database=override_database)
     mysql_config = config['mysql']
     
     display_simulation_plan()
@@ -368,11 +389,11 @@ def main():
         logger.info("\n" + "=" * 80)
         logger.info("SIMULATION SUCCESSFUL!")
         logger.info("=" * 80)
-        logger.info(f"\nDatabase is ready with {SimulationConfig.TOTAL_WEEKS // 52:.1f} years of realistic transaction data.")
+        logger.info(f"\nDatabase '{mysql_config['database']}' is ready with {SimulationConfig.TOTAL_WEEKS // 52:.1f} years of realistic transaction data.")
         logger.info("\nTo extend simulation to 10 years:")
         logger.info("  1. Set TOTAL_WEEKS = 520 in SimulationConfig")
         logger.info("  2. Add more entries to INVENTORY_ADDITIONS (extend the pattern)")
-        logger.info("  3. Run: python master_simulation.py")
+        logger.info(f"  3. Run: python master_simulation.py {mysql_config['database']}")
         logger.info("\n")
         
     except Exception as e:

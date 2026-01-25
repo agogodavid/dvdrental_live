@@ -10,6 +10,25 @@
   - Troubleshooting tips
   - What you'll get at the end
 
+### For Multi-Database Setup
+- **[MASTER_SIMULATION_DB_OVERRIDE_CHEATSHEET.md](MASTER_SIMULATION_DB_OVERRIDE_CHEATSHEET.md)** ⭐ For Classes/Groups
+  - Run simulations in different databases
+  - No config.json changes needed
+  - All credentials from config.json
+  - Perfect for class groups
+  
+- **[MASTER_SIMULATION_FOR_CLASSES.md](MASTER_SIMULATION_FOR_CLASSES.md)** ⭐ Teaching Guide
+  - Setup databases for student groups
+  - Multiple group scenarios
+  - Example scripts and workflows
+  - Connection templates for students
+  - Best practices for large classes
+
+- **[MASTER_SIMULATION_MULTI_DB.md](MASTER_SIMULATION_MULTI_DB.md)**
+  - Comprehensive multi-database guide
+  - Real-world workflow examples
+  - Error handling and cleanup
+
 ### For Reference
 - **[MASTER_SIMULATION_QUICK_REF.md](MASTER_SIMULATION_QUICK_REF.md)** 
   - Copy-paste commands
