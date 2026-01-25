@@ -355,15 +355,15 @@ class DVDRentalDataGenerator:
         """Randomly determine if a day is a spike day (4x transactions)"""
         return random.random() < spike_probability
     
-    def add_week_of_transactions(self, week_start_date: datetime, week_number: int):
+    def add_week_of_transactions(self, week_start_date, week_number: int):
         """
         Add a week's worth of transactions.
         
         Args:
-            week_start_date: Monday of the week
+            week_start_date: Monday of the week (as datetime.date)
             week_number: Which week this is (1-indexed)
         """
-        logger.info(f"Adding transactions for week {week_number} starting {week_start_date.date()}")
+        logger.info(f"Adding transactions for week {week_number} starting {week_start_date}")
         
         # Determine number of new customers to add
         new_customers = 10
@@ -399,7 +399,7 @@ class DVDRentalDataGenerator:
             # Check for spike day (4x volume)
             if self.is_spike_day(current_date):
                 day_transactions *= 4
-                logger.info(f"Spike day detected on {current_date.date()}: {day_transactions} transactions")
+                logger.info(f"Spike day detected on {current_date}: {day_transactions} transactions")
             
             # Generate transactions
             for _ in range(day_transactions):
