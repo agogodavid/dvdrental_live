@@ -37,7 +37,8 @@ class DVDRentalDataGenerator:
             self.conn = mysql.connector.connect(
                 host=self.config['host'],
                 user=self.config['user'],
-                password=self.config['password']
+                password=self.config['password'],
+                database=self.config.get('database', 'dvdrental_live')
             )
             self.cursor = self.conn.cursor()
             logger.info("Connected to MySQL successfully")
