@@ -1,0 +1,23 @@
+{
+  "mysql": {
+    "host": "localhost",
+    "user": "root",
+    "password": "root",
+    "database": "dvdrental_live"
+  },
+  "generation": {
+    "initial_weeks": 12,
+    "films_count": 100,
+    "stores_count": 2,
+    "initial_customers": 50,
+    "weekly_new_customers": 10,
+    "base_weekly_transactions": 500,
+    "customer_churn_after_weeks": 5,
+    "churn_rate": 0.4,
+    "loyal_customer_rate": 0.15,
+    "rental_duration_min": 3,
+    "rental_duration_max": 7,
+    "spike_day_probability": 0.05,
+    "spike_day_multiplier": 4
+  }
+}
