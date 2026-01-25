@@ -206,7 +206,41 @@ def run_initial_setup(mysql_config: dict) -> Tuple[int, int]:
         raise
 
 
-def add_inventory_batch(mysql_config: dict, quantity: int, description: str, date_purchased=None, staff_id=None) -> int:
+def get_monday_of_latest_rental_week(mysql_config: dict) -> date:
+    """Get the Monday of the week containing the most recent rental"""
+    try:
+        conn = mysql.connector.connect(
+            host=mysql_config['host'],
+            user=mysql_config['user'],
+            password=mysql_config['password'],
+            database=mysql_config['database']
+        )
+        cursor = conn.cursor()
+        
+        # Get most recent rental date
+        cursor.execute("SELECT MAX(rental_date) FROM rental")
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if result and result[0]:
+            latest_rental = result[0]
+            if isinstance(latest_rental, datetime):
+                latest_rental_date = latest_rental.date()
+            else:
+                latest_rental_date = latest_rental
+            
+            # Get Monday of that week (0=Monday, 6=Sunday)
+            monday_of_week = latest_rental_date - timedelta(days=latest_rental_date.weekday())
+            return monday_of_week
+    except Exception as e:
+        logger.warning(f"Could not get latest rental date: {e}")
+    
+    # Fallback to today if no rentals exist
+    return date.today() - timedelta(days=date.today().weekday())
+
+
+
     """Add inventory using inventory_manager logic"""
     try:
         import random
@@ -823,8 +857,10 @@ def main():
             
             if should_add and qty > 0:
                 current_date = SimulationConfig.START_DATE + timedelta(weeks=current_sim_week)
+                # Get Monday of the current active rental simulation week
+                monday_of_rental_week = get_monday_of_latest_rental_week(mysql_config)
                 logger.info(f"\n📦 Week {current_sim_week} ({current_date}): {desc}")
-                added = add_inventory_batch(mysql_config, qty, desc)
+                added = add_inventory_batch(mysql_config, qty, desc, date_purchased=monday_of_rental_week)
                 total_inventory_added += added
             
             # Calculate weeks to add

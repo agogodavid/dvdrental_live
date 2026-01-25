@@ -301,16 +301,21 @@ class DVDRentalDataGenerator:
         self.cursor.execute("SELECT store_id FROM store")
         store_ids = [row[0] for row in self.cursor.fetchall()]
         
+        # Get staff IDs for random assignment
+        self.cursor.execute("SELECT staff_id FROM staff")
+        staff_ids = [row[0] for row in self.cursor.fetchall()]
+        
         # Create multiple copies of each film per store
         inventory = []
         for film_id in film_ids:
             for store_id in store_ids:
                 # 2-5 copies per film per store
                 for _ in range(random.randint(2, 5)):
-                    inventory.append((film_id, store_id))
+                    staff_id = random.choice(staff_ids) if staff_ids else 1
+                    inventory.append((film_id, store_id, self.start_date, staff_id))
         
         self.cursor.executemany(
-            "INSERT INTO inventory (film_id, store_id) VALUES (%s, %s)",
+            "INSERT INTO inventory (film_id, store_id, date_purchased, staff_id) VALUES (%s, %s, %s, %s)",
             inventory
         )
         self.conn.commit()
