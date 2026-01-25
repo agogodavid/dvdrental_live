@@ -562,12 +562,23 @@ class DVDRentalDataGenerator:
 
 def main():
     """Main function to initialize and populate database"""
-    config = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': 'root',
-        'database': 'dvdrental_live'
-    }
+    # Load configuration from config.json
+    config_file = 'config.json'
+    try:
+        with open(config_file, 'r') as f:
+            config_data = json.load(f)
+            config = config_data.get('mysql', {})
+            if 'database' not in config:
+                config['database'] = 'dvdrental_live'
+    except FileNotFoundError:
+        logger.error(f"Configuration file {config_file} not found")
+        logger.info("Using default configuration...")
+        config = {
+            'host': 'localhost',
+            'user': 'root',
+            'password': 'root',
+            'database': 'dvdrental_live'
+        }
     
     generator = DVDRentalDataGenerator(config)
     
