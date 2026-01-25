@@ -240,7 +240,7 @@ def get_monday_of_latest_rental_week(mysql_config: dict) -> date:
     return date.today() - timedelta(days=date.today().weekday())
 
 
-
+def add_inventory_batch(mysql_config: dict, quantity: int, description: str, date_purchased=None, staff_id=None) -> int:
     """Add inventory using inventory_manager logic"""
     try:
         import random
