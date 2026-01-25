@@ -127,22 +127,56 @@ class DVDRentalDataGenerator:
         """Seed films"""
         logger.info(f"Seeding {count} films...")
         
-        titles = ['The Matrix', 'Inception', 'The Dark Knight', 'Interstellar', 'The Godfather',
-                 'Pulp Fiction', 'Forrest Gump', 'The Shawshank Redemption', 'The Avengers', 'Avatar']
+        # Generate diverse, unique film titles
+        film_adjectives = [
+            'The', 'A', 'Silent', 'Crazy', 'Dark', 'Bright', 'Lost', 'Found', 'Hidden', 'Secret',
+            'Last', 'First', 'Only', 'Final', 'Ultimate', 'Amazing', 'Incredible', 'Mysterious'
+        ]
+        film_nouns = [
+            'Matrix', 'Dream', 'Knight', 'Voyage', 'Dynasty', 'Heist', 'Forest', 'Redemption',
+            'Avenger', 'Avatar', 'Prophet', 'Shadow', 'Light', 'Truth', 'Illusion', 'Reality',
+            'Kingdom', 'Empire', 'Revolution', 'Rebellion', 'Journey', 'Quest', 'Escape', 'Return',
+            'Mystery', 'Enigma', 'Curse', 'Blessing', 'Judgment', 'Trial', 'Victory', 'Defeat',
+            'Phoenix', 'Dragon', 'Sphinx', 'Minotaur', 'Odyssey', 'Inferno', 'Paradise', 'Purgatory'
+        ]
+        film_modifiers = [
+            '', ' Returns', ' Reloaded', ' Revolutions', ' Rising', ' Falls', ' Awakens', ' Strikes Back',
+            ' Forever', ' Again', ' Unleashed', ' Unbound', ' Eternal', ' Infinite', ' Absolute'
+        ]
         
         descriptions = [
             'A computer programmer discovers an alternate reality',
             'A thief who steals corporate secrets from dreams',
-            'A masked vigilante protects his city',
-            'An expedition through a wormhole in space',
-            'The aging patriarch of an organized crime dynasty'
+            'A masked vigilante protects his city from corruption',
+            'An expedition through a wormhole to save humanity',
+            'The aging patriarch of an organized crime dynasty',
+            'A pair of hit men navigate philosophical conversations',
+            'A man finds redemption through unexpected friendship',
+            'An ensemble of heroes band together against evil',
+            'An explorer discovers a world unlike any other',
+            'Two con artists plan an elaborate heist',
+            'A detective uncovers a dark conspiracy',
+            'A group of rebels fight against tyranny',
+            'A lone warrior seeks revenge and justice',
+            'An unlikely friendship changes everything',
+            'A thrilling adventure across dangerous lands'
         ]
         
         ratings = ['G', 'PG', 'PG-13', 'R', 'NC-17']
         
+        # Generate unique titles
+        used_titles = set()
         films = []
         for i in range(count):
-            title = f"{random.choice(titles)} {i}"
+            # Create unique title
+            while True:
+                adj = random.choice(film_adjectives)
+                noun = random.choice(film_nouns)
+                mod = random.choice(film_modifiers)
+                title = f"{adj} {noun}{mod}"
+                if title not in used_titles:
+                    used_titles.add(title)
+                    break
             description = random.choice(descriptions)
             release_year = random.randint(1980, 2023)
             language_id = random.randint(1, 5)
@@ -208,7 +242,7 @@ class DVDRentalDataGenerator:
         self.conn.commit()
         
         # Get address IDs
-        self.cursor.execute("SELECT address_id FROM address ORDER BY address_id DESC LIMIT ?", (num_stores * 2,))
+        self.cursor.execute(f"SELECT address_id FROM address ORDER BY address_id DESC LIMIT {num_stores * 2}")
         address_ids = [row[0] for row in reversed(self.cursor.fetchall())]
         
         # Create staff first
