@@ -1,0 +1,104 @@
+{
+  "mysql": {
+    "host": "localhost",
+    "user": "root",
+    "password": "root",
+    "database": "dvdrental_10year_advanced"
+  },
+  "simulation": {
+    "start_date": "2001-12-30",
+    "initial_weeks": 520
+  },
+  "generation": {
+    "films_count": 500,
+    "stores_count": 3,
+    "initial_customers": 100,
+    "weekly_new_customers": 15,
+    "base_weekly_transactions": 400,
+    "customer_segments": {
+      "super_loyal": {
+        "percentage": 0.10,
+        "churn_rate": 0.05,
+        "activity_multiplier": 3.0,
+        "lifetime_weeks": 200
+      },
+      "loyal": {
+        "percentage": 0.20,
+        "churn_rate": 0.15,
+        "activity_multiplier": 2.0,
+        "lifetime_weeks": 100
+      },
+      "average": {
+        "percentage": 0.30,
+        "churn_rate": 0.40,
+        "activity_multiplier": 1.0,
+        "lifetime_weeks": 50
+      },
+      "occasional": {
+        "percentage": 0.40,
+        "churn_rate": 0.80,
+        "activity_multiplier": 0.3,
+        "lifetime_weeks": 20
+      }
+    },
+    "business_lifecycle": {
+      "growth_phase_weeks": 104,
+      "plateau_phase_weeks": 208,
+      "decline_phase_weeks": 104,
+      "reactivation_phase_weeks": 104
+    },
+    "volume_modifiers": {
+      "growth_factor": 0.025,
+      "plateau_factor": 0.000,
+      "decline_factor": -0.005,
+      "reactivation_factor": 0.015
+    },
+    "reactivation": {
+      "enable_reactivation": true,
+      "reactivation_probability": 0.25,
+      "reactivation_start_week": 416,
+      "reactivation_duration_weeks": 104
+    },
+    "plateau": {
+      "start_week": 104,
+      "duration_weeks": 208,
+      "plateau_multiplier": 1.0,
+      "seasonal_volatility": 0.1
+    },
+    "rental_duration_min": 2,
+    "rental_duration_max": 10,
+    "spike_day_probability": 0.08,
+    "spike_day_multiplier": 3,
+    "performance": {
+      "batch_size": 1000,
+      "commit_frequency": 5000,
+      "disable_autocommit": true,
+      "use_prepared_statements": true,
+      "enable_bulk_inserts": true
+    }
+  },
+  "inventory_purchasing": {
+    "strategy": "aggressive",
+    "aggressive": {
+      "description": "Aggressive inventory growth across all genres",
+      "inventory_per_film": [8, 12],
+      "diversification_factor": 1.0
+    },
+    "stable": {
+      "description": "Stable inventory growth with balanced genre distribution",
+      "inventory_per_film": [5, 8],
+      "diversification_factor": 0.8
+    },
+    "seasonal": {
+      "description": "Stable growth focused on seasonally appropriate genres",
+      "inventory_per_film": [4, 7],
+      "diversification_factor": 0.3,
+      "seasonal_preferences": {
+        "Q1": ["Drama", "Romance", "Comedy"],
+        "Q2": ["Action", "Sci-Fi", "Adventure"],
+        "Q3": ["Horror", "Thriller", "Action"],
+        "Q4": ["Family", "Animation", "Comedy"]
+      }
+    }
+  }
+}
