@@ -1,0 +1,13 @@
+The {adjective} {noun}
+{location} Battle
+The {noun} War
+{verb} in {location}
+The {adjective} Soldier
+{noun} Honor
+The {adjective} {location}
+{verb} the {noun}
+The {adjective} {verb}
+{location} Front
+The {noun} Mission
+{adjective} {location}
+The {noun} Victory

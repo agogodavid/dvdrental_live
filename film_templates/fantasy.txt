@@ -1,0 +1,13 @@
+The {adjective} {noun}
+{location} Quest
+The {noun} Magic
+{verb} in {location}
+The {adjective} Sorcerer
+{noun} Enchantment
+The {adjective} {location}
+{verb} the {noun}
+The {adjective} {verb}
+{location} Realm
+The {noun} Spell
+{adjective} {location}
+The {noun} Kingdom

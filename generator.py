@@ -402,7 +402,7 @@ class DVDRentalDataGenerator:
         logger.info(f"Adding transactions for week {week_number} starting {week_start_date}")
         
         # Determine number of new customers to add
-        new_customers = 10
+        new_customers = self.config.get('generation', {}).get('weekly_new_customers', 10)
         self.add_new_customers(week_number, new_customers)
         
         # Get active customers for this week
@@ -412,7 +412,7 @@ class DVDRentalDataGenerator:
             return
         
         # Calculate transaction volume
-        base_volume = 500
+        base_volume = self.config.get('generation', {}).get('base_weekly_transactions', 500)
         volume_growth = 1 + (week_number * 0.02)  # 2% growth per week
         seasonal_factor = 1 + (self.seasonal_drift / 100)  # Convert percentage to multiplier
         expected_transactions = int(base_volume * volume_growth * seasonal_factor)
@@ -537,17 +537,19 @@ class DVDRentalDataGenerator:
                 active.append(customer_id)
             # After week 8: apply permanent churn logic
             else:
-                # 15% of customers are always loyal
+                # 15% of customers are always loyal (never churn)
                 if random.random() < 0.15:
                     active.append(customer_id)
-                # After 5 weeks from creation, 40% permanently churn out
+                # For remaining 85%: after 5 weeks from creation, 40% churn permanently
                 elif weeks_since_creation < 5:
                     active.append(customer_id)
-                elif random.random() > 0.4:  # 60% stay, 40% churn
-                    active.append(customer_id)
                 else:
-                    # Mark as permanently churned
-                    self.churned_customers.add(customer_id)
+                    # Only apply churn to customers older than 5 weeks
+                    if random.random() > 0.4:  # 60% stay, 40% churn
+                        active.append(customer_id)
+                    else:
+                        # Mark as permanently churned
+                        self.churned_customers.add(customer_id)
         
         return active
     
@@ -555,27 +557,34 @@ class DVDRentalDataGenerator:
                             inventory_ids: List[int], staff_ids: List[int]) -> Tuple:
         """Generate a single rental transaction"""
         customer_id = random.choice(customers)
+        
+        # Get available inventory IDs that this customer hasn't rented recently
+        available_inventory = self._get_available_inventory_for_customer(customer_id, rental_date)
+        
+        if not available_inventory:
+            # If no available inventory, fall back to any inventory
+            available_inventory = inventory_ids
+        
         # Use weighted selection - newer inventory more likely to be rented
-        inventory_id = self._get_weighted_inventory_id()
+        inventory_id = self._get_weighted_inventory_id_from_list(available_inventory)
         if not inventory_id:
-            inventory_id = random.choice(inventory_ids)  # Fallback
+            inventory_id = random.choice(available_inventory)  # Fallback
+        
         staff_id = random.choice(staff_ids)
         
         # Rental duration 3-7 days, with bias towards shorter periods
         rental_days = random.choices([3, 4, 5, 6, 7], weights=[0.3, 0.3, 0.2, 0.1, 0.1])[0]
         
-        # Return date usually early in week (Mon-Wed)
-        # Add rental days, then adjust to early week
-        return_date = rental_date + timedelta(days=rental_days)
-        days_until_next_monday = (7 - return_date.weekday()) % 7
-        if days_until_next_monday == 0 and return_date.weekday() != 0:
-            days_until_next_monday = 7
-        
-        # 70% chance return is within rental period or early next week
+        # Return date logic - all rentals eventually get returned
+        # 70% return on time (within rental period)
+        # 30% return late (1-14 days late)
         if random.random() < 0.7:
+            # Return within rental period
             return_date = rental_date + timedelta(days=rental_days)
         else:
-            return_date = None  # Not yet returned
+            # Return late (1-14 days late)
+            late_days = random.randint(1, 14)
+            return_date = rental_date + timedelta(days=rental_days + late_days)
         
         return (rental_date, inventory_id, customer_id, return_date, staff_id)
     
@@ -660,6 +669,75 @@ class DVDRentalDataGenerator:
         selected_id = random.choices(inventory_ids, weights=normalized_weights, k=1)[0]
         
         return selected_id
+    
+    def _get_weighted_inventory_id_from_list(self, inventory_ids: List[int]) -> int:
+        """
+        Get a weighted random inventory ID from a specific list where newer inventory is more likely to be rented.
+        """
+        if not inventory_ids:
+            return None
+        
+        # Get creation times for the specified inventory IDs
+        placeholders = ','.join(['%s'] * len(inventory_ids))
+        self.cursor.execute(f"""
+            SELECT inventory_id, created_at
+            FROM inventory
+            WHERE inventory_id IN ({placeholders})
+            ORDER BY created_at DESC
+        """, inventory_ids)
+        inventory_data = self.cursor.fetchall()
+        
+        if not inventory_data:
+            return None
+        
+        # Calculate weights: newer items get higher weight
+        weights = []
+        total = len(inventory_data)
+        
+        for rank in range(total):
+            # Newer items (lower rank) get higher weight
+            weight = math.exp(-rank / max(1, total / 3))
+            weights.append(weight)
+        
+        # Normalize weights
+        total_weight = sum(weights)
+        normalized_weights = [w / total_weight for w in weights]
+        
+        # Select inventory based on weights
+        available_ids = [item[0] for item in inventory_data]
+        selected_id = random.choices(available_ids, weights=normalized_weights, k=1)[0]
+        
+        return selected_id
+    
+    def _get_available_inventory_for_customer(self, customer_id: int, rental_date: datetime) -> List[int]:
+        """
+        Get inventory IDs that this customer hasn't rented recently (within last 30 days).
+        Returns list of available inventory IDs.
+        """
+        # Check rentals from the last 30 days for this customer
+        cutoff_date = rental_date - timedelta(days=30)
+        
+        self.cursor.execute("""
+            SELECT DISTINCT i.film_id
+            FROM rental r
+            JOIN inventory i ON r.inventory_id = i.inventory_id
+            WHERE r.customer_id = %s 
+            AND r.rental_date >= %s
+        """, (customer_id, cutoff_date))
+        
+        recently_rented_films = {row[0] for row in self.cursor.fetchall()}
+        
+        # Get all inventory IDs
+        self.cursor.execute("SELECT inventory_id, film_id FROM inventory")
+        all_inventory = self.cursor.fetchall()
+        
+        # Filter out inventory for recently rented films
+        available_inventory = []
+        for inventory_id, film_id in all_inventory:
+            if film_id not in recently_rented_films:
+                available_inventory.append(inventory_id)
+        
+        return available_inventory
     
     def _get_all_staff_ids(self) -> List[int]:
         """Get all staff IDs"""

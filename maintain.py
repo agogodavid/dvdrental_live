@@ -9,6 +9,7 @@ from mysql.connector import Error
 import json
 import logging
 import sys
+import math
 from datetime import datetime
 from pathlib import Path
 
@@ -275,12 +276,19 @@ class DatabaseMaintenance:
                     MIN(rental_date) as start_date,
                     MAX(rental_date) as end_date,
                     COUNT(*) as total_transactions,
-                    COUNT(DISTINCT customer_id) as total_customers,
-                    COUNT(DISTINCT WEEK(rental_date)) as total_weeks
+                    COUNT(DISTINCT customer_id) as total_customers
                 FROM rental
             """)
             
-            start_date, end_date, total_transactions, total_customers, total_weeks = self.cursor.fetchone()
+            start_date, end_date, total_transactions, total_customers = self.cursor.fetchone()
+            
+            # Calculate actual calendar weeks (not just weeks with data)
+            if start_date and end_date:
+                # Calculate weeks including partial weeks at start/end
+                days_diff = (end_date - start_date).days
+                total_weeks = math.ceil((days_diff + 1) / 7)  # +1 to include both start and end dates
+            else:
+                total_weeks = 0
             
             if not start_date:
                 logger.info("  No rental data found")

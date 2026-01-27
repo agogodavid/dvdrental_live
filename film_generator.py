@@ -486,7 +486,22 @@ class FilmGenerator:
             
             # Generate and add films
             films_added = 0
-            film_date = release_date if release_date else date.today()
+            # Always use the provided release_date, never default to today
+            if release_date is None:
+                logger.warning("No release_date provided, using simulation start date from config")
+                # Fall back to config start date if available, otherwise use a reasonable default
+                try:
+                    import json
+                    with open('config.json', 'r') as f:
+                        config = json.load(f)
+                    start_date_str = config.get('simulation', {}).get('start_date', '2001-10-01')
+                    from datetime import datetime
+                    release_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                except:
+                    # Final fallback
+                    release_date = date(2001, 10, 1)
+            
+            film_date = release_date
             film_year = film_date.year
             
             # Create film_releases table if it doesn't exist

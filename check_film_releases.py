@@ -1,4 +1,4 @@
-fix#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Film Releases Checker - View film releases and inventory purchases
 """

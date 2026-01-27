@@ -149,7 +149,7 @@ def create_database_if_needed(mysql_config: dict) -> bool:
         return False
 
 
-def run_initial_setup(mysql_config: dict) -> Tuple[int, int]:
+def run_initial_setup(mysql_config: dict, config: dict) -> Tuple[int, int]:
     """
     Run initial database setup using generator.py
     Returns: (initial_weeks, initial_inventory_count)
@@ -172,9 +172,9 @@ def run_initial_setup(mysql_config: dict) -> Tuple[int, int]:
         initial_inventory = generator.cursor.fetchone()[0]
         logger.info(f"✓ Initial inventory created: {initial_inventory} items")
         
-        # Generate initial rental transactions (~12 weeks)
+        # Generate initial rental transactions using config values
         logger.info("Generating initial rental transactions...")
-        initial_weeks = 12
+        initial_weeks = config.get('simulation', {}).get('initial_weeks', 12)
         generator.generate_weeks(initial_weeks, start_date=SimulationConfig.START_DATE)
         
         # Count initial transactions
@@ -781,7 +781,7 @@ def main():
         logger.info(f"Start date set to {SimulationConfig.START_DATE}")
         input("\nPress Enter to begin simulation...")
         
-        initial_weeks, initial_inventory = run_initial_setup(mysql_config)
+        initial_weeks, initial_inventory = run_initial_setup(mysql_config, config)
         current_week = initial_weeks
         
         # PHASE 2: Incremental updates with seasonal variations
