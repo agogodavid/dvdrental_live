@@ -15,6 +15,9 @@ if ! command -v mysql &> /dev/null; then
     exit 1
 fi
 
+# Activate virtual environment
+source dvdrental_live/bin/activate
+
 echo ""
 echo "Installing Python dependencies..."
 pip install -q -r requirements.txt

@@ -54,6 +54,18 @@ Or update `config.json` with your MySQL credentials.
 pip install -r requirements.txt
 ```
 
+### 4. Run Setup Script
+
+```bash
+bash setup.sh
+```
+
+This script will:
+- Check for MySQL installation
+- Install Python dependencies
+- Activate the virtual environment
+- Initialize the database with generator.py
+
 ## Quick Start
 
 ### Initialize Database
