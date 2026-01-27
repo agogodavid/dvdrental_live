@@ -7,7 +7,7 @@
   },
   "simulation": {
     "start_date": "2001-12-30",
-    "initial_weeks": 12
+    "initial_weeks": 14
   },
   "generation": {
     "films_count": 100,
@@ -22,5 +22,9 @@
     "rental_duration_max": 7,
     "spike_day_probability": 0.05,
     "spike_day_multiplier": 4
+  },
+  "master_simulation": {
+    "total_weeks": 52,
+    "start_date": "2001-10-01"
   }
 }
