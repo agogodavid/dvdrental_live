@@ -41,7 +41,7 @@ def get_next_week_number(cursor) -> int:
         return 1
 
 
-def add_incremental_week(config_file='config.json', num_weeks: int = 1, seasonal_drift: float = 0.0):
+def add_incremental_week(config_file='config.json', num_weeks: int = 1, seasonal_drift: float = 0.0, override_database=None):
     """Add incremental weeks to the database
     
     Args:
@@ -50,8 +50,12 @@ def add_incremental_week(config_file='config.json', num_weeks: int = 1, seasonal
         seasonal_drift: Percentage change in transaction volume (-100 to 100+)
                        e.g., 50 = 50% increase, -50 = 50% decrease
     """
-    config = load_config(config_file)
+    config = load_config(config_file, override_database)
     mysql_config = config['mysql']
+    
+    # Print database name being updated
+    database_name = mysql_config.get('database', 'unknown')
+    logger.info(f"Updating database: {database_name}")
     
     generator = DVDRentalDataGenerator(mysql_config)
     generator.seasonal_drift = seasonal_drift
@@ -63,15 +67,18 @@ def add_incremental_week(config_file='config.json', num_weeks: int = 1, seasonal
         generator.cursor.execute("SELECT COUNT(*) FROM customer WHERE activebool = TRUE")
         active_customers = generator.cursor.fetchone()[0]
         
-        generator.cursor.execute("SELECT MAX(rental_date) FROM rental")
-        last_rental_row = generator.cursor.fetchone()
+        # Get range of existing records
+        generator.cursor.execute("SELECT MIN(rental_date), MAX(rental_date) FROM rental")
+        date_range = generator.cursor.fetchone()
         
-        if not last_rental_row or not last_rental_row[0]:
+        if not date_range or not date_range[1]:
             logger.warning("No existing rentals found. Use generator.py for initial setup.")
             return
         
-        last_rental = last_rental_row[0]
-        logger.info(f"Last rental date: {last_rental}")
+        first_rental, last_rental = date_range
+        logger.info(f"Current record range: {first_rental} to {last_rental}")
+        
+        logger.info(f"Active customers: {active_customers}")
         
         # Calculate next week start (move last_rental to next Monday)
         from datetime import timedelta, datetime
@@ -85,7 +92,6 @@ def add_incremental_week(config_file='config.json', num_weeks: int = 1, seasonal
         next_week_start = next_week_start - timedelta(days=next_week_start.weekday())  # Move to Monday
         
         logger.info(f"Adding {num_weeks} weeks starting from {next_week_start}")
-        logger.info(f"Current active customers: {active_customers}")
         
         # Calculate week numbers based on weeks since start of simulation
         generator.cursor.execute("SELECT MIN(rental_date) FROM rental")
@@ -146,8 +152,7 @@ def main():
                 sys.exit(1)
     
     logger.info(f"Adding {num_weeks} weeks with seasonal drift: {seasonal_drift:+.1f}%")
-    config = load_config(override_database=override_database)
-    add_incremental_week(config['mysql'], num_weeks=num_weeks, seasonal_drift=seasonal_drift)
+    add_incremental_week(config_file='config.json', num_weeks=num_weeks, seasonal_drift=seasonal_drift, override_database=override_database)
 
 
 if __name__ == '__main__':

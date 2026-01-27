@@ -18,6 +18,8 @@ from typing import List, Tuple, Dict
 import json
 from pathlib import Path
 import logging
+import argparse
+import os
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -31,6 +33,9 @@ class DVDRentalDataGenerator:
         self.conn = None
         self.cursor = None
         self.db_name = config.get('database', 'dvdrental_live')
+        # Allow database override via environment variable
+        if 'DATABASE_NAME' in os.environ:
+            self.db_name = os.environ['DATABASE_NAME']
         self.seasonal_drift = 0.0  # Percentage change in transaction volume (-100 to 100+)
         self.churned_customers = set()  # Track permanently churned customers
         
@@ -45,18 +50,29 @@ class DVDRentalDataGenerator:
     def connect(self):
         """Establish MySQL connection"""
         try:
+            # Connect to MySQL without specifying database first
             self.conn = mysql.connector.connect(
                 host=self.config['host'],
                 user=self.config['user'],
-                password=self.config['password'],
-                database=self.config.get('database', 'dvdrental_live')
+                password=self.config['password']
             )
             self.cursor = self.conn.cursor()
+            
+            # Check if database exists
+            self.cursor.execute("SHOW DATABASES")
+            databases = [db[0] for db in self.cursor.fetchall()]
+            
+            if self.db_name not in databases:
+                logger.info(f"Database {self.db_name} does not exist. Creating it...")
+                self.create_database()
+            else:
+                # Select the database if it exists
+                self.cursor.execute(f"USE {self.db_name}")
+                
             logger.info("Connected to MySQL successfully")
         except Error as e:
             logger.error(f"Error connecting to MySQL: {e}")
             raise
-    
     def disconnect(self):
         """Close database connection"""
         if self.cursor:
@@ -681,6 +697,10 @@ class DVDRentalDataGenerator:
 
 def main():
     """Main function to initialize and populate database"""
+    parser = argparse.ArgumentParser(description='DVD Rental Data Generator')
+    parser.add_argument('--database', type=str, help='Database name to use')
+    args = parser.parse_args()
+    
     # Load configuration from config.json
     config_file = 'config.json'
     try:
@@ -704,6 +724,10 @@ def main():
         }
         start_date = None
         initial_weeks = 12
+    
+    # Override database name if --database argument provided
+    if args.database:
+        mysql_config['database'] = args.database
     
     generator = DVDRentalDataGenerator(mysql_config)
     

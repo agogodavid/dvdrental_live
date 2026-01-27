@@ -329,17 +329,22 @@ class DatabaseMaintenance:
             logger.info("\n" + "-" * 80)
             logger.info("Growth Analysis:")
             
+            # Use week before last for more accurate metrics (last week often incomplete)
             if len(week_data) >= 2:
                 first_week_transactions = week_data[0][4]
-                last_week_transactions = week_data[-1][4]
+                # Use second-to-last week instead of last week (which is often incomplete)
+                comparison_week_index = -2 if len(week_data) >= 3 else -1
+                last_week_transactions = week_data[comparison_week_index][4]
                 growth_percent = ((last_week_transactions - first_week_transactions) / max(first_week_transactions, 1)) * 100
                 logger.info(f"  First Week Transactions: {first_week_transactions:,}")
-                logger.info(f"  Latest Week Transactions: {last_week_transactions:,}")
+                logger.info(f"  Comparison Week Transactions: {last_week_transactions:,}")
                 logger.info(f"  Growth: {growth_percent:+.1f}%")
                 
                 # Calculate average weekly growth
-                if len(week_data) > 1:
-                    avg_growth = growth_percent / (len(week_data) - 1)
+                # Use n-1 weeks for average (excluding first week)
+                weeks_for_avg = len(week_data) - 1 if len(week_data) >= 3 else len(week_data) - 1
+                if weeks_for_avg > 0:
+                    avg_growth = growth_percent / max(weeks_for_avg, 1)
                     logger.info(f"  Avg Weekly Growth: {avg_growth:+.1f}%")
             
             logger.info("=" * 80)
@@ -392,6 +397,22 @@ Commands:
         print(f"\n✓ Using default database: {default_db}\n")
     
     maintenance = DatabaseMaintenance(config, database_override)
+    # Ensure database exists (create if needed)
+    if database_override:
+        try:
+            # Connect to MySQL server without database
+            temp_conn = mysql.connector.connect(
+                host=config['mysql']['host'],
+                user=config['mysql']['user'],
+                password=config['mysql']['password']
+            )
+            cursor = temp_conn.cursor()
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {database_override}")
+            cursor.close()
+            temp_conn.close()
+        except Error as e:
+            logger.error(f"Failed to create database {database_override}: {e}")
+            sys.exit(1)
     
     try:
         maintenance.connect()
