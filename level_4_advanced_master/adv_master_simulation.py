@@ -286,7 +286,9 @@ def run_initial_setup(config: AdvancedSimulationConfig) -> Tuple[int, int]:
         
         logger.info(f"Initializing database for start date: {config.start_date}")
         generator = DVDRentalDataGenerator(config.mysql_config)
-        generator.initialize_database(config.start_date)
+        generator.connect()
+        generator.initialize_and_seed()
+        generator.disconnect()
         
         logger.info("Database initialized and seeded successfully")
         
