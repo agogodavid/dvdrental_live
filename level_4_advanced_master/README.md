@@ -71,7 +71,7 @@ Tracks everything needed for business analytics:
 ## Quick Start
 
 ### 1. Configure
-Edit `config_advanced.json` to set:
+Edit `../shared/configs/config_10year_advanced.json` to set:
 - Advanced tracking enabled
 - Seasonal volatility
 - Customer churn rates
@@ -80,33 +80,38 @@ Edit `config_advanced.json` to set:
 
 ### 2. Run Simulation
 ```bash
-cd level_4_advanced_master
-python run_advanced_simulation.py
+# From workspace root or level_4_advanced_master directory
+python level_4_advanced_master/master_simulation.py
 ```
 
 ### 3. Analyze Results
 ```bash
-# View late fees
-mysql -u root -p dvdrental_advanced < ../shared/analysis/late_fees_analysis.sql
+# View late fees and AR
+mysql -u root -p dvdrental_10year_advanced -e "
+SELECT ar_status, COUNT(*), SUM(ar_balance) 
+FROM customer_ar 
+WHERE ar_balance > 0 
+GROUP BY ar_status;
+"
 ```
 
 ## Command-Line Arguments
 
 ```bash
-# Default: loads config_10year_advanced.json, database 'dvdrental_advanced'
-python run_advanced_simulation.py
+# Default: loads config_10year_advanced.json, database 'dvdrental_10year_advanced'
+python level_4_advanced_master/master_simulation.py
 
 # Override database name
-python run_advanced_simulation.py --database my_advanced_test
+python level_4_advanced_master/master_simulation.py --database my_advanced_test
 
 # Use different config file
-python run_advanced_simulation.py --config config_10year.json
+python level_4_advanced_master/master_simulation.py --config config_custom.json
 
 # Override with fixed seasonal boost (percentage)
-python run_advanced_simulation.py --season 40
+python level_4_advanced_master/master_simulation.py --season 40
 
 # Combine arguments
-python run_advanced_simulation.py --config config_10year.json --database test_db --season 25
+python level_4_advanced_master/master_simulation.py --database test_db --season 25
 ```
 
 ### Argument Reference
@@ -149,13 +154,16 @@ Creates advanced tracking tables:
 
 ```
 level_4_advanced_master/
-├── run_advanced_simulation.py       ← Main orchestration
-├── config_10year_advanced.json      ← Advanced config
-├── schema_advanced_features.sql     ← Advanced tables & views
-├── tracking_system/
-│   ├── advanced_incremental_update.py     ← Late fees & AR tracking
-│   └── advanced_incremental_update_demo.py ← Demo/testing
-└── README.md
+├── master_simulation.py             ← Main unified simulation (THE definitive tool)
+├── run_advanced_simulation.py       ← Legacy (deprecated, use master_simulation.py)
+└── README.md                        ← This file
+
+../shared/configs/
+├── config_10year_advanced.json      ← Level 4 config (10 years, all features)
+└── config.json                      ← Level 1-3 config
+
+../level_1_basic/
+└── schema_base.sql                  ← Base schema with late_fees, customer_ar, inventory_status tables
 ```
 
 ## Output Statistics
@@ -196,24 +204,27 @@ After running, you can analyze:
 ## Common Tasks
 
 ```bash
-# Run full advanced 10-year simulation
-python run_advanced_simulation.py config_10year_advanced.json
+# Run full advanced 10-year simulation (RECOMMENDED)
+python level_4_advanced_master/master_simulation.py
 
-# Initialize late fees tracking (first time)
-cd tracking_system
-python advanced_incremental_update.py --init
+# Custom database
+python level_4_advanced_master/master_simulation.py --database my_10year_data
 
-# Calculate and report late fees
-python advanced_incremental_update.py --update
+# View late fees summary
+mysql -u root -p dvdrental_10year_advanced -e "
+SELECT COUNT(*) as overdue_count, SUM(total_fee) as total_fees 
+FROM late_fees WHERE paid = FALSE;
+"
 
-# View late fees view
-mysql -u root -p -e "SELECT * FROM late_fees_view LIMIT 10;"
-
-# Analyze AR by customer segment
-mysql -u root -p < ../shared/analysis/ar_analysis.sql
+# Analyze AR aging
+mysql -u root -p dvdrental_10year_advanced -e "
+SELECT ar_status, COUNT(*) as customers, SUM(ar_balance) as total_owed
+FROM customer_ar WHERE ar_balance > 0 
+GROUP BY ar_status;
+"
 
 # Export data for BI tool
-mysqldump -u root -p dvdrental_advanced > backup_advanced.sql
+mysqldump -u root -p dvdrental_10year_advanced > backup_10year_advanced.sql
 ```
 
 ## Teaching with Level 4
@@ -273,10 +284,13 @@ This is the final level! Level 4 creates production-ready epoch datasets for:
 ✅ **Business Problems**: Late fees, AR, collections
 ✅ **Epoch Datasets**: Complete 10-year stories with realistic challenges
 ✅ **Production Quality**: Suitable for graduate education and BI training
+**Main Script:** `master_simulation.py` (unified Level 4 tool)
+- **Base Generator:** `../generator.py` (Level 1)
+- **Film System:** `../level_3_master_simulation/film_system/film_generator.py`
+- **Inventory Manager:** `../enhanced_inventory_manager.py`
+- **Configuration:** `../shared/configs/config_10year_advanced.json`
 
-## Dependencies
-
-- Level 1, 2, 3 prerequisites
+**Note:** `run_advanced_simulation.py` is deprecated. Use `master_simulation.py` instead.es
 - Requires `run_advanced_simulation.py` (main orchestrator)
 - Requires advanced_incremental_update.py for late fees
 - Requires all config files
