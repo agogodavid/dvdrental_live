@@ -1,15 +1,53 @@
-The Adventures of {name}
-{name}'s Quest
-The {adjective} {noun}
-Journey to {location}
-{name} and Friends
-The {noun} Kingdom
-Tales of {location}
-The Legend of {name}
-The {adjective} Treasure
-Magic in {location}
-The Secret of {noun}
-{name}'s Big Adventure
-The {noun} Chronicles
-Legends of {location}
-The {noun} Returns
+The Laugh Factory
+{name}'s Comedy Hour
+Fun Times
+The Ultimate {adjective}
+When Things Go Wrong
+The Setup
+Mishaps Happen
+Comedy Gold
+The Punchline
+Hilarious {noun}
+The {adjective} Timing
+Perfect Comedy
+Jokes and {noun}
+The {adjective} Bit
+Funny Business
+Comedy Night
+The {adjective} Act
+Stand Up {name}
+The {adjective} Routine
+Improv Gone {adjective}
+The Comedy Club
+{name}'s Got Jokes
+The Big Laugh
+Family Dinner
+The {adjective} Dinner
+Holiday Disaster
+The {adjective} Family
+Relatives {noun}
+The {adjective} Gathering
+When {name} Visits
+The {adjective} Reunion
+Uncle's {noun}
+The {adjective} Problem
+Aunt's Secret
+The {adjective} Reveal
+Sibling Rivalry
+The {adjective} Fight
+Brother vs Sister
+The {adjective} Contest
+Childhood {noun}
+The {adjective} Memory
+Growing Up
+The {adjective} Flashback
+Life Lessons
+The {adjective} Truth
+Learning {noun}
+The {adjective} Wisdom
+School Days
+The {adjective} Classroom
+Friends Forever
+The {adjective} Squad
+Coming of Age
+The {adjective} Summer

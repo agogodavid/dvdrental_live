@@ -1,0 +1,13 @@
+The {adjective} {noun}
+{location} Heist
+The {noun} Investigation
+{verb} in {location}
+The {adjective} Detective
+{noun} Justice
+The {adjective} {location}
+{verb} the {noun}
+The {adjective} {verb}
+{location} Underworld
+The {noun} Case
+{adjective} {location}
+The {noun} Trial

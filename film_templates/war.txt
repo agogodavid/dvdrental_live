@@ -1,13 +1,46 @@
-The {adjective} {noun}
-{location} Battle
-The {noun} War
-{verb} in {location}
-The {adjective} Soldier
-{noun} Honor
-The {adjective} {location}
-{verb} the {noun}
-The {adjective} {verb}
-{location} Front
-The {noun} Mission
-{adjective} {location}
-The {noun} Victory
+The {adjective} War
+Battle at {location}
+The {noun} Conflict
+When {name} {verb}
+The {adjective} Battle
+Soldiers of {location}
+The {adjective} Front
+Glory and {noun}
+The {adjective} Honor
+Duty Calls {name}
+The {adjective} Mission
+Against Enemy {noun}
+The {adjective} Assault
+Defending {noun}
+The {adjective} Home
+Invasion of {location}
+The {adjective} Attack
+Courage in Combat
+The {adjective} Courage
+Brotherhood in {location}
+The {adjective} Bond
+When Friends Become Enemies
+The {adjective} Tragedy
+Peace is Lost
+The {adjective} Conflict
+Rise of the General
+The {adjective} Leader
+The {adjective} Strategy
+Winning the {noun}
+The {adjective} Victory
+Last Stand at {location}
+The {adjective} Line
+Sacrifice for {noun}
+The {adjective} Duty
+No Surrender
+The {adjective} Resistance
+Fighting for Tomorrow
+The {adjective} Future
+Against Impossible Odds
+The {adjective} Struggle
+Heroes Never Die
+The {adjective} Legacy
+Aftermath of {noun}
+The {adjective} Ruin
+Rebuilding {location}
+The {adjective} Dawn

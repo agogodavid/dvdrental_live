@@ -1,17 +1,49 @@
-The Future of {noun}
-{name} Protocol
-Quantum {noun}
-The Last {noun}
-Star {name}
-Beyond {location}
-The {adjective} Frontier
-Time {verb}
-Android {noun}
-The {noun} War
-Cyber {name}
-The {noun} Horizon
-Dimension {name}
-Code {noun}
-The {noun} Experiment
-Genesis {noun}
+The Future {noun}
+Year {noun}
 The {adjective} Planet
+Life on {location}
+The {adjective} Colony
+{name}'s World
+The {adjective} Discovery
+Technology of Tomorrow
+The {adjective} Age
+Robots and {noun}
+The {adjective} Machine
+When AI {verb}
+The {adjective} Intelligence
+Space Station {location}
+The {adjective} Orbit
+Beyond Earth
+The {adjective} Universe
+Among {noun}
+The {adjective} Stars
+Alien {noun}
+The {adjective} Contact
+First Meeting
+The {adjective} Encounter
+Invasion from {location}
+The {adjective} Assault
+Defending {noun}
+The {adjective} Battle
+War in Space
+The {adjective} Conflict
+Last Stand
+The {adjective} Fight
+Against {noun}
+The {adjective} Resistance
+Rise of the Machines
+The {adjective} Takeover
+When {name} {verb}
+The {adjective} Reckoning
+Time Travels
+The {adjective} Loop
+Change the Past
+The {adjective} Chance
+Alternate {noun}
+The {adjective} Reality
+Parallel {location}
+The {adjective} World
+Impossible {noun}
+The {adjective} Dream
+Quantum {noun}
+The {adjective} Leap

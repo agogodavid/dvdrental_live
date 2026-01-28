@@ -1,13 +1,44 @@
-The {adjective} {noun}
-{location} Showdown
-The {noun} Trail
-{verb} in {location}
-The {adjective} Gunslinger
-{noun} Justice
-The {adjective} {location}
-{verb} the {noun}
-The {adjective} {verb}
-{location} Outlaws
-The {noun} Range
-{adjective} {location}
-The {noun} Territory
+The {adjective} Outlaw
+Gunslinger {name}
+The {noun} at Noon
+The {adjective} Showdown
+Western {noun}
+The {adjective} Frontier
+Dust and {noun}
+The {adjective} Desert
+The Saloon {noun}
+The {adjective} Town
+When {name} {verb}
+The {adjective} Gunfight
+Six Shooters
+The {adjective} Battle
+Bank Robbery
+The {adjective} Heist
+Cattle Drive {noun}
+The {adjective} Journey
+Horse and {noun}
+The {adjective} Ride
+Sheriff of {location}
+The {adjective} Law
+Wanted Dead or Alive
+The {adjective} Bounty
+Duel at Sundown
+The {adjective} End
+Law vs {noun}
+The {adjective} War
+Revenge in {location}
+The {adjective} Vendetta
+Against {noun}
+The {adjective} Fight
+Stand Your Ground
+The {adjective} Defense
+Gold Rush {noun}
+The {adjective} Fortune
+Fortune Seekers
+The {adjective} Quest
+Hidden Treasure
+The {adjective} Map
+Legacy of {noun}
+The {adjective} Past
+Nothing Left Behind
+The {adjective} Clean Slate

@@ -245,6 +245,45 @@ FILM_TEMPLATES = {
 }
 
 
+def _generate_enhanced_description(category: str, title: str, adjective: str, noun: str, 
+                                   location: str, verb: str, name: str, name2: str, 
+                                   template: Dict) -> str:
+    """
+    Generate a rich description using title elements for more context-relevant text
+    """
+    # Base description templates that can incorporate title elements
+    base_descriptions = template.get("descriptions", [])
+    
+    if not base_descriptions:
+        base_descriptions = [
+            f"A {adjective or 'captivating'} {category.lower()} experience",
+            f"Featuring {name or 'unforgettable characters'} in {location or 'exotic locations'}",
+            "A film that will leave you breathless"
+        ]
+    
+    # Start with a random base description
+    description = random.choice(base_descriptions)
+    
+    # Enhance with title elements
+    enhancements = []
+    if name and name not in description:
+        enhancements.append(f"starring {name}")
+    if location and location not in description:
+        enhancements.append(f"set in {location}")
+    if adjective and adjective.lower() not in description.lower():
+        enhancements.append(f"a {adjective.lower()} tale")
+    if noun and noun not in description:
+        enhancements.append(f"of {noun.lower()}")
+    
+    # Add 1-2 random enhancements to create richer descriptions
+    if enhancements:
+        num_enhancements = min(2, len(enhancements))
+        selected_enhancements = random.sample(enhancements, num_enhancements)
+        description += ". " + ", ".join(selected_enhancements) + "."
+    
+    return description
+
+
 def load_templates_from_files():
     """
     Load film templates from separate .txt files for easy expansion
@@ -293,38 +332,48 @@ def generate_film_title(category: str) -> Tuple[str, str, str]:
     # Choose a title template
     title_template = random.choice(template["titles"])
     
-    # Build the title by replacing placeholders
+    # Build the title by replacing placeholders and track which elements were used
     title = title_template
+    used_adjective = None
+    used_noun = None
+    used_location = None
+    used_verb = None
+    used_name = None
+    used_name2 = None
     
     if "{adjective}" in title:
         adjectives = template.get("adjectives", ["The", "A", "Final", "Last", "Great", "Amazing"])
-        title = title.replace("{adjective}", random.choice(adjectives))
+        used_adjective = random.choice(adjectives)
+        title = title.replace("{adjective}", used_adjective)
     if "{noun}" in title:
         nouns = template.get("nouns", ["Adventure", "Journey", "Quest", "Mission", "Challenge"])
-        title = title.replace("{noun}", random.choice(nouns))
+        used_noun = random.choice(nouns)
+        title = title.replace("{noun}", used_noun)
     if "{location}" in title:
         locations = template.get("locations", ["City", "World", "Planet", "Galaxy", "Realm"])
-        title = title.replace("{location}", random.choice(locations))
+        used_location = random.choice(locations)
+        title = title.replace("{location}", used_location)
     if "{verb}" in title:
         verbs = template.get("verbs", ["Rises", "Falls", "Returns", "Awakens", "Ends"])
-        title = title.replace("{verb}", random.choice(verbs))
+        used_verb = random.choice(verbs)
+        title = title.replace("{verb}", used_verb)
     if "{name}" in title and "name2" not in template:
         names = template.get("names", ["Hero", "Warrior", "Legend", "Champion", "Guardian"])
-        title = title.replace("{name}", random.choice(names))
+        used_name = random.choice(names)
+        title = title.replace("{name}", used_name)
     if "{name}" in title and "{name2}" in template:
         names = template.get("names", ["Hero", "Warrior", "Legend", "Champion", "Guardian"])
-        title = title.replace("{name}", random.choice(names))
+        used_name = random.choice(names)
+        title = title.replace("{name}", used_name)
     if "{name2}" in title:
         names2 = template.get("names2", ["Villain", "Enemy", "Foe", "Antagonist", "Opponent"])
-        title = title.replace("{name2}", random.choice(names2))
+        used_name2 = random.choice(names2)
+        title = title.replace("{name2}", used_name2)
     
-    # Choose description
-    descriptions = template.get("descriptions", [
-        "An epic adventure that will test the limits of courage",
-        "A thrilling journey filled with unexpected twists and turns",
-        "A compelling story of triumph against overwhelming odds"
-    ])
-    description = random.choice(descriptions)
+    # Generate enhanced description using title elements
+    description = _generate_enhanced_description(
+        category, title, used_adjective, used_noun, used_location, used_verb, used_name, used_name2, template
+    )
     
     # Choose rating
     rating_dist = template.get("rating_dist", [("PG", 0.3), ("PG-13", 0.4), ("R", 0.3)])
@@ -437,6 +486,20 @@ class FilmGenerator:
             lang_result = self.cursor.fetchone()
             language_id = lang_result[0] if lang_result else 1
             
+            # First, load templates from files to get all available categories
+            load_templates_from_files()
+            
+            # Ensure all template categories exist in the database
+            template_categories = list(FILM_TEMPLATES.keys())
+            for template_cat in template_categories:
+                self.cursor.execute("SELECT category_id FROM category WHERE name = %s", (template_cat,))
+                cat_result = self.cursor.fetchone()
+                if not cat_result:
+                    # Create category if it doesn't exist
+                    logger.info(f"Creating new category from template: {template_cat}")
+                    self.cursor.execute("INSERT INTO category (name) VALUES (%s)", (template_cat,))
+                    self.conn.commit()
+            
             # Get or create categories
             if category_focus:
                 self.cursor.execute("SELECT category_id FROM category WHERE name = %s", (category_focus,))
@@ -537,8 +600,8 @@ class FilmGenerator:
                 # Add inventory copies to stores
                 inventory = []
                 for store_id in store_ids:
-                    # Add 5-10 copies per store for more substantial inventory growth
-                    for _ in range(random.randint(5, 10)):
+                    # Add 5-7 copies per store for more substantial inventory growth
+                    for _ in range(random.randint(5, 7)):
                         staff_id = random.choice(staff_ids)
                         inventory.append((film_id, store_id, film_date, staff_id))
                 

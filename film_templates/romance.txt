@@ -1,15 +1,46 @@
-Love in {location}
-{name} and {name2}
-The {adjective} Heart
-Eternal {noun}
-A {noun} Romance
-Second {noun}
-When Hearts {verb}
-Love After {noun}
-A {adjective} Proposal
-Kisses in {location}
-{name}'s Love
-The {adjective} Wedding
-A {noun} Story
-Meant to Be
-Against All {noun}
+Love Blooms
+The {adjective} Romance
+Falling for {name}
+The {adjective} Passion
+Hearts Entwined
+The {adjective} Bond
+When They Met in {location}
+The {adjective} Moment
+First Kiss
+The {adjective} Spark
+Impossible Love
+The {adjective} Forbidden
+Against All Odds
+The {adjective} Struggle
+Can They Be Together
+The {adjective} Question
+{name}'s Dilemma
+The {adjective} Choice
+Torn Between Two
+The {adjective} Conflict
+Love Conquers All
+The {adjective} Triumph
+Breaking Barriers
+The {adjective} Revolution
+Crossing Lines
+The {adjective} Risk
+Duty Calls
+The {adjective} Obligation
+Following the Heart
+The {adjective} Truth
+Second Chances
+The {adjective} Beginning
+Rekindled {noun}
+The {adjective} Fire
+Letters to {name}
+The {adjective} Words
+Waiting for Love
+The {adjective} Patience
+Forever Starts Now
+The {adjective} Promise
+Till the End
+The {adjective} Commitment
+Love Never Dies
+The {adjective} Eternal
+Memory and Heart
+The {adjective} Legacy

@@ -1,13 +1,48 @@
-The {adjective} {noun}
-{location} Revealed
-The {noun} Investigation
-Secrets of {location}
+Real Events {noun}
+The {adjective} Documentary
+True Story of {name}
 The {adjective} Truth
-{noun} Uncovered
-The {adjective} {location}
-{verb} the {noun}
-The {adjective} {verb}
-{location} Exposed
-The {noun} Files
-{adjective} {location}
-The {noun} Project
+Uncover {noun}
+The {adjective} Expose
+Behind the Scenes
+The {adjective} Reality
+Where {name} {verb}
+The {adjective} Account
+Historical {noun}
+The {adjective} Era
+Through Time
+The {adjective} Journey
+Witness {noun}
+The {adjective} Account
+Following {name}
+The {adjective} Path
+Life of {noun}
+The {adjective} Chronicle
+Days in {location}
+The {adjective} Passage
+People of {location}
+The {adjective} Community
+Voices from {noun}
+The {adjective} Testimony
+Stories That Matter
+The {adjective} Tale
+Exploring {noun}
+The {adjective} Quest
+Discovery in {location}
+The {adjective} Find
+{name}'s Legacy
+The {adjective} Monument
+Remember When
+The {adjective} Retrospective
+Change Over Time
+The {adjective} Evolution
+Building {noun}
+The {adjective} Progress
+Against All Odds
+The {adjective} Triumph
+Personal {noun}
+The {adjective} Memory
+Untold {noun}
+The {adjective} Secret
+Breaking {noun}
+The {adjective} Silence

@@ -1,13 +1,48 @@
-The {adjective} {noun}
-{location} Quest
-The {noun} Magic
-{verb} in {location}
-The {adjective} Sorcerer
-{noun} Enchantment
-The {adjective} {location}
-{verb} the {noun}
-The {adjective} {verb}
-{location} Realm
-The {noun} Spell
-{adjective} {location}
-The {noun} Kingdom
+The {adjective} Spell
+Magic in {location}
+{name}'s Curse
+The {adjective} Enchantment
+Mystical {noun}
+The {adjective} Wonder
+Fantasy Realm
+The {adjective} Quest
+Wizards of {location}
+The {adjective} Power
+Dragons and {noun}
+The {adjective} Flight
+Ancient Magic
+The {adjective} Sorcery
+Creatures in {location}
+The {adjective} Realm
+Magical {noun}
+The {adjective} Fantasy
+Kingdom of {name}
+The {adjective} Crown
+Prophecy of {noun}
+The {adjective} Fate
+Legends of {location}
+The {adjective} Myth
+Sacred {noun}
+The {adjective} Temple
+Enchanted {location}
+The {adjective} Garden
+Elves of {noun}
+The {adjective} Forest
+Dark Magic
+The {adjective} Curse
+Breaking the Spell
+The {adjective} Battle
+Forces of {noun}
+The {adjective} War
+Good vs {noun}
+The {adjective} Choice
+When {name} {verb}
+The {adjective} Transformation
+From {noun} to Hero
+The {adjective} Rise
+Falling {adjective}
+The {adjective} Descent
+Light and {noun}
+The {adjective} Balance
+Beyond {noun}
+The {adjective} Wonder

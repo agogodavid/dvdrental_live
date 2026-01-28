@@ -1,14 +1,49 @@
-The {adjective} {noun}
-{name}'s Christmas
-A {noun} Adventure
-The {noun} Lesson
-{name} Learns {noun}
-Family {noun}
-The Big {noun}
-{name}'s Journey
-A {adjective} Birthday
-The {noun} Challenge
-Together {verb}
+The {adjective} Laugh
+{name}'s Comedy
+Funny Times in {location}
+The {adjective} Joke
+Giggling About {noun}
+The {adjective} Antic
+When {name} {verb}
+The {adjective} Hijink
+Mishaps in {location}
+The {adjective} Blunder
+The {adjective} Chaos
+Mixed Up {noun}
+The {adjective} Mix-Up
+Fun with {name}
+The {adjective} Mess
+Trouble at {location}
+The {adjective} Disaster
+Funny Business
+The {adjective} Scheme
+{name} Gets it Wrong
+The {adjective} Gambit
+Awkward Moments
+The {adjective} Situation
+Love Struck {name}
+The {adjective} Romance
+Dating {noun}
+The {adjective} Fling
+Finding Love in {location}
+The {adjective} Crush
+Unexpected Romance
+The {adjective} Twist
+Heart in {location}
+The {adjective} Deal
+Romantic Mishaps
+The {adjective} Misunderstanding
+When Love {verb}
+The {adjective} Complication
+Almost Love
+The {adjective} Close Call
+Second Chances
+The {adjective} Beginning
+First Meeting {noun}
+The {adjective} Encounter
+Love Finds {name}
+The {adjective} Spark
+Dancing in {location}
+The {adjective} Night
+Unexpected {noun}
 The {adjective} Surprise
-Our {noun} Story
-The {noun} of Home

@@ -1,0 +1,48 @@
+Songs of {name}
+The {adjective} Melody
+Music in {location}
+The {adjective} Concert
+When {name} {verb}
+The {adjective} Performance
+The {adjective} Stage
+Dreams and {noun}
+The {adjective} Note
+Harmony {noun}
+The {adjective} Chorus
+Passion for {noun}
+The {adjective} Love
+From {location} to Fame
+The {adjective} Journey
+Finding Your Voice
+The {adjective} Sound
+Singing {adjective}
+The {adjective} Heart
+Musical {noun}
+The {adjective} Story
+Notes from {name}
+The {adjective} Letter
+Rhyme and {noun}
+The {adjective} Verse
+Composing {noun}
+The {adjective} Creation
+The Band {noun}
+The {adjective} Dream
+Together They {verb}
+The {adjective} Union
+Breakup Blues
+The {adjective} Sorrow
+Starting Over
+The {adjective} Beginning
+Comeback {noun}
+The {adjective} Return
+Greater Than Ever
+The {adjective} Success
+The {adjective} Tour
+Around {location}
+The {adjective} World
+Final {noun}
+The {adjective} Farewell
+Forever {noun}
+The {adjective} Memory
+Legacy of {name}
+The {adjective} Echo

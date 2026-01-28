@@ -1,5 +1,4 @@
 The {adjective} {noun}
-{name}'s Big Adventure
 {adjective} Love
 Mr. {name}
 Crazy {name}
@@ -13,3 +12,37 @@ The {adjective} Wedding
 Speed {noun}
 Four {adjective} Friends
 The {location} {noun}
+A {adjective} Affair
+Little {name}
+Big {name}
+Zany {noun}
+{adjective} Business
+The {adjective} Date
+Romance in {location}
+Happy {noun}
+The {name} Incident
+Funny Business
+The {adjective} Couple
+Summer {noun}
+Winter Romance
+The {adjective} Mix-up
+Best Friends
+Terrible {noun}
+The {adjective} Vacation
+Perfect {name}
+The {location} Love Story
+Awkward {noun}
+The {adjective} Mystery
+Blind {noun}
+The {name} Job
+Family Secrets
+The {adjective} Breakup
+Holiday {noun}
+The {adjective} Getaway
+Unexpected {noun}
+The {adjective} Encounter
+Unlikely {name}
+The {adjective} Adventure
+Weekend {noun}
+The {adjective} Misunderstanding
+Hilarious {noun}

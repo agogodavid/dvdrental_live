@@ -1,15 +1,48 @@
-The {noun} of {name}
+The {adjective} {noun}
+{name}'s {noun}
+Secrets in {location}
+The {adjective} Truth
+Echoes of {location}
+{name} {verb}
+The {adjective} Betrayal
 When {name} {verb}
-A {adjective} Love
-The {name} Years
-Before {name}
-After {noun}
+Shadows {location}
+The {adjective} Reckoning
+Lost {noun}
+The {adjective} Redemption
+Where {name} {verb}
+Broken {noun}
+The {adjective} Affair
+Fate {noun}
+The {adjective} Revelation
+Silent {noun}
+The {adjective} Journey
+Before {name} {verb}
+Unspoken {noun}
+The {adjective} Awakening
+Ghosts of {location}
+The {adjective} Sacrifice
+Running from {location}
+The {adjective} Confession
+{name}'s Burden
+The {adjective} Loss
+Under {adjective} Skies
+The {adjective} Void
 Letters to {name}
-The {adjective} Heart
-Echoes of {noun}
-A Thousand {noun}
-The Burden of {noun}
-{name}'s Choice
-The Path to {noun}
-A Single {noun}
-The Weight of {noun}
+The {adjective} Past
+Tomorrow Never {verb}
+The {adjective} Distance
+Tears in {location}
+The {adjective} Silence
+Echoing {noun}
+The {adjective} Search
+Finding {name}
+The {adjective} Compass
+Through {adjective} Eyes
+The {adjective} Storm
+After {name} Left
+The {adjective} Scar
+Between {adjective} Worlds
+The {adjective} Bridge
+Waiting for {name}
+The {adjective} Forgiveness

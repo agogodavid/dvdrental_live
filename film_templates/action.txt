@@ -1,15 +1,49 @@
-The {adjective} Mission
+The {adjective} Agent
+Mission: {location}
 Operation {name}
-{adjective} Strike
-The {name} Protocol
-Rogue {noun}
-The {adjective} Target
-Deadly {noun}
-Shadow {name}
-The {location} Assignment
-Agent {name}
-The {adjective} Pursuit
-Maximum {noun}
-The {name} Conspiracy
-Dark {noun}
+Escape from {location}
 The {adjective} Warrior
+Hunt for {name}
+Raid on {location}
+The {adjective} Soldier
+Assault {location}
+The {adjective} Commando
+Strike Force {name}
+Combat {location}
+Siege of {location}
+The {adjective} Pursuit
+Midnight {name}
+The Last {name}
+Maximum {adjective}
+Extreme {name}
+The {adjective} Siege
+Operation Exodus
+The Final {name}
+Tactical {name}
+The {adjective} Extraction
+Danger Zone {location}
+Shadow {name}
+The {adjective} Summit
+Breach {location}
+Codename {name}
+The Ultimate {adjective}
+Storm {location}
+The {adjective} Frontline
+Black Ops: {name}
+The {adjective} Showdown
+Fortress {location}
+The Deadliest {name}
+Recon {location}
+Nightfall {name}
+The {adjective} Regiment
+Iron {name}
+The {adjective} Encounter
+Crossfire {location}
+The {adjective} Patriot
+Infiltration {name}
+The {adjective} Vendetta
+Double Cross {location}
+The {adjective} Mercenary
+Red Alert {location}
+The {adjective} Insurgent
+Uprising {name}

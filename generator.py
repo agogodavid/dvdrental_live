@@ -47,6 +47,9 @@ class DVDRentalDataGenerator:
         else:
             self.start_date = start_date_str
         
+        # Get power law exponent from config (for Zipfian distribution)
+        self.zipfian_alpha = config.get('generation', {}).get('rental_distribution', {}).get('alpha', 1.0)
+        
     def connect(self):
         """Establish MySQL connection"""
         try:
@@ -566,7 +569,8 @@ class DVDRentalDataGenerator:
             available_inventory = inventory_ids
         
         # Use weighted selection - newer inventory more likely to be rented
-        inventory_id = self._get_weighted_inventory_id_from_list(available_inventory)
+        # Pass rental_date for new movie boost calculation
+        inventory_id = self._get_weighted_inventory_id_from_list(available_inventory, rental_date=rental_date)
         if not inventory_id:
             inventory_id = random.choice(available_inventory)  # Fallback
         
@@ -670,48 +674,145 @@ class DVDRentalDataGenerator:
         
         return selected_id
     
-    def _get_weighted_inventory_id_from_list(self, inventory_ids: List[int]) -> int:
+    def _get_weighted_inventory_id_from_list(self, inventory_ids: List[int], rental_date: datetime = None) -> int:
         """
-        Get a weighted random inventory ID from a specific list where newer inventory is more likely to be rented.
+        Get a weighted random inventory ID using a power law (Zipfian) distribution.
+        This models realistic DVD rental patterns where popular films dominate rentals (80/20 rule).
+        A percentage of newer movies get a temporary boost to compete with established popular films.
         """
         if not inventory_ids:
             return None
         
-        # Get creation times for the specified inventory IDs
+        # Get film rental statistics, film IDs, and release dates for the specified inventory IDs
         placeholders = ','.join(['%s'] * len(inventory_ids))
-        self.cursor.execute(f"""
-            SELECT inventory_id, created_at
-            FROM inventory
-            WHERE inventory_id IN ({placeholders})
-            ORDER BY created_at DESC
-        """, inventory_ids)
-        inventory_data = self.cursor.fetchall()
+        try:
+            # Try query with film_releases table first (preferred, has exact dates)
+            self.cursor.execute(f"""
+                SELECT i.inventory_id, f.film_id, COALESCE(COUNT(r.rental_id), 0) as rental_count, fr.release_date
+                FROM inventory i
+                JOIN film f ON i.film_id = f.film_id
+                LEFT JOIN film_releases fr ON f.film_id = fr.film_id
+                LEFT JOIN rental r ON i.inventory_id = r.inventory_id
+                WHERE i.inventory_id IN ({placeholders})
+                GROUP BY i.inventory_id, f.film_id, fr.release_date
+                ORDER BY rental_count DESC
+            """, inventory_ids)
+            inventory_data = self.cursor.fetchall()
+        except Exception:
+            # Fallback: use film.release_year if film_releases table doesn't exist
+            # Convert year to approximate date (January 1st of that year)
+            self.cursor.execute(f"""
+                SELECT i.inventory_id, f.film_id, COALESCE(COUNT(r.rental_id), 0) as rental_count,
+                       DATE(CONCAT(f.release_year, '-01-01')) as release_date
+                FROM inventory i
+                JOIN film f ON i.film_id = f.film_id
+                LEFT JOIN rental r ON i.inventory_id = r.inventory_id
+                WHERE i.inventory_id IN ({placeholders})
+                GROUP BY i.inventory_id, f.film_id, f.release_year
+                ORDER BY rental_count DESC
+            """, inventory_ids)
+            inventory_data = self.cursor.fetchall()
         
         if not inventory_data:
             return None
         
-        # Calculate weights: newer items get higher weight
-        weights = []
-        total = len(inventory_data)
+        # Extract rental counts, film IDs, and release dates
+        rental_counts = [item[2] for item in inventory_data]
+        film_ids = [item[1] for item in inventory_data]
+        release_dates = [item[3] for item in inventory_data]
         
-        for rank in range(total):
-            # Newer items (lower rank) get higher weight
-            weight = math.exp(-rank / max(1, total / 3))
-            weights.append(weight)
+        # Calculate Zipfian weights (power law distribution) with selective new movie boost
+        # Use the configured alpha value for realistic distribution
+        weights = self._calculate_zipfian_weights(
+            rental_counts, 
+            alpha=self.zipfian_alpha,
+            release_dates=release_dates,
+            current_date=rental_date,
+            film_ids=film_ids
+        )
         
-        # Normalize weights
-        total_weight = sum(weights)
-        normalized_weights = [w / total_weight for w in weights]
-        
-        # Select inventory based on weights
+        # Select inventory based on power law weights
         available_ids = [item[0] for item in inventory_data]
-        selected_id = random.choices(available_ids, weights=normalized_weights, k=1)[0]
+        selected_id = random.choices(available_ids, weights=weights, k=1)[0]
         
         return selected_id
     
+    def _calculate_zipfian_weights(self, rental_counts: List[int], alpha: float = 1.0, 
+                                   release_dates: List = None, current_date: datetime = None,
+                                   film_ids: List[int] = None) -> List[float]:
+        """
+        Calculate Zipfian (power law) weights based on film popularity with selective boost for new movies.
+        Implements Zipf's Law: weight ∝ 1 / (rank ^ alpha)
+        
+        This creates the classic 80/20 distribution where top films dominate rentals.
+        NEW MOVIES: A percentage of recently released films get a temporary boost to compete with established popular films.
+        This reflects reality where not all new releases are equally popular.
+        
+        Args:
+            rental_counts: List of rental counts for each film
+            alpha: Power law exponent (1.0 = moderate, 1.5 = more extreme)
+            release_dates: List of release dates for each film (optional, for new movie boost)
+            current_date: Current simulation date (optional, for new movie boost)
+            film_ids: List of film IDs (optional, for selective boost determination)
+        
+        Returns:
+            Normalized weights for random.choices()
+        """
+        if not rental_counts:
+            return [1.0]
+        
+        # Get new movie boost config
+        new_movie_config = self.config.get('generation', {}).get('new_movie_boost', {})
+        boost_enabled = new_movie_config.get('enabled', True)
+        boost_days = new_movie_config.get('days_to_boost', 90)
+        boost_factor = new_movie_config.get('boost_factor', 2.0)
+        boost_percentage = new_movie_config.get('boost_percentage', 100)  # Default: all films get boost
+        
+        # Rank films by rental count (1 = most popular)
+        sorted_counts = sorted(set(rental_counts), reverse=True)
+        count_to_rank = {count: rank + 1 for rank, count in enumerate(sorted_counts)}
+        
+        # Calculate Zipfian weights: weight = 1 / (rank ^ alpha)
+        weights = []
+        for idx, count in enumerate(rental_counts):
+            rank = count_to_rank[count]
+            weight = 1.0 / ((rank + 1) ** alpha)
+            
+            # Apply new movie boost if configured
+            if boost_enabled and release_dates and current_date and film_ids:
+                release_date = release_dates[idx]
+                film_id = film_ids[idx]
+                if release_date:
+                    days_since_release = (current_date.date() if isinstance(current_date, datetime) else current_date) - release_date
+                    days_since_release = days_since_release.days if hasattr(days_since_release, 'days') else days_since_release
+                    
+                    # If film released recently, check if it gets boosted (based on boost_percentage)
+                    if 0 <= days_since_release <= boost_days:
+                        # Use film_id modulo to deterministically select which films get boosted
+                        # This ensures consistent behavior and realistic distribution
+                        if (film_id % 100) < boost_percentage:
+                            # Linear boost: starts at boost_factor, decreases to 1.0 over boost_days
+                            boost_multiplier = boost_factor - (days_since_release / boost_days) * (boost_factor - 1.0)
+                            weight *= boost_multiplier
+            
+            weights.append(weight)
+        
+        # Normalize weights to sum to 1.0
+        total_weight = sum(weights)
+        if total_weight > 0:
+            normalized_weights = [w / total_weight for w in weights]
+        else:
+            normalized_weights = [1.0 / len(weights) for _ in weights]
+        
+        return normalized_weights
+    
     def _get_available_inventory_for_customer(self, customer_id: int, rental_date: datetime) -> List[int]:
         """
-        Get inventory IDs that this customer hasn't rented recently (within last 30 days).
+        Get inventory IDs that:
+        1. Are not currently checked out (return_date IS NULL or in future)
+        2. The customer hasn't rented recently (within last 30 days)
+        
+        This prevents double-checkout where same inventory item is rented twice simultaneously.
         Returns list of available inventory IDs.
         """
         # Check rentals from the last 30 days for this customer
@@ -727,8 +828,17 @@ class DVDRentalDataGenerator:
         
         recently_rented_films = {row[0] for row in self.cursor.fetchall()}
         
-        # Get all inventory IDs
-        self.cursor.execute("SELECT inventory_id, film_id FROM inventory")
+        # Get all inventory IDs that are NOT currently checked out
+        # Exclude inventory where return_date is NULL (still checked out) or in the future
+        self.cursor.execute("""
+            SELECT DISTINCT i.inventory_id, i.film_id
+            FROM inventory i
+            WHERE i.inventory_id NOT IN (
+                SELECT DISTINCT r.inventory_id
+                FROM rental r
+                WHERE r.return_date IS NULL
+            )
+        """)
         all_inventory = self.cursor.fetchall()
         
         # Filter out inventory for recently rented films
@@ -749,7 +859,7 @@ class DVDRentalDataGenerator:
         self.create_database()
         self.create_schema()
         self.seed_base_data()
-        self.seed_films(100)
+        self.seed_films(100, start_date=self.start_date)
         self.create_stores_and_staff(2)
         self.create_inventory()
         logger.info("Database initialized and seeded successfully")

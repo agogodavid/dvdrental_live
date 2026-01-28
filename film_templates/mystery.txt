@@ -1,0 +1,47 @@
+The {adjective} Mystery
+Clues to {noun}
+The {noun} Case
+When {name} {verb}
+The {adjective} Secret
+Hidden {noun}
+The {adjective} Truth
+Finding {noun}
+The {adjective} Detective
+Solving {noun}
+The {adjective} Puzzle
+Pieces Don't Fit
+The {adjective} Problem
+The {adjective} Enigma
+Unknowns of {location}
+The {adjective} Question
+Following the Trail
+The {adjective} Path
+Suspicious {noun}
+The {adjective} Behavior
+The {adjective} Suspect
+Unlikely {noun}
+The {adjective} Culprit
+Everyone's a Suspect
+The {adjective} Doubt
+Can You Trust {name}
+The {adjective} Betrayal
+Nothing is Clear
+The {adjective} Fog
+Lies and {noun}
+The {adjective} Deception
+What Really {verb}
+The {adjective} Truth
+Who Did {noun}
+The {adjective} Revelation
+Where is {name}
+The {adjective} Search
+Gone Missing
+The {adjective} Disappearance
+No Witnesses
+The {adjective} Silence
+Unexpected Turn
+The {adjective} Twist
+Final {noun}
+The {adjective} Answer
+Solved at Last
+The {adjective} Resolution

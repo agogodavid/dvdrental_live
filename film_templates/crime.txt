@@ -1,13 +1,46 @@
-The {adjective} {noun}
-{location} Heist
-The {noun} Investigation
-{verb} in {location}
+The {adjective} Crime
+Murder in {location}
+{name}'s Secret
+The {adjective} Heist
+Theft of {noun}
+The {adjective} Con
+Criminal {noun}
+The {adjective} Underworld
+Organized {noun}
+The {adjective} Syndicate
+Black Market {noun}
+The {adjective} Trade
+When {name} {verb}
+The {adjective} Deal
+Dirty {noun}
+The {adjective} Betrayal
+The Mob Boss
+The {adjective} Kingpin
+Rise of {name}
+The {adjective} Empire
+Fall of {noun}
+The {adjective} Downfall
+Corruption in {location}
+The {adjective} Conspiracy
+Government {noun}
+The {adjective} Cover-Up
+Secrets Underground
+The {adjective} Bunker
+Hidden {noun}
+The {adjective} Cache
+Finding Evidence
 The {adjective} Detective
-{noun} Justice
-The {adjective} {location}
-{verb} the {noun}
-The {adjective} {verb}
-{location} Underworld
-The {noun} Case
-{adjective} {location}
-The {noun} Trial
+Murder Mystery
+The {adjective} Case
+Solving {noun}
+The {adjective} Clue
+Detective {name}
+The {adjective} Investigation
+Undercover {noun}
+The {adjective} Operation
+Double Agent
+The {adjective} Spy
+Betrayal Runs {adjective}
+The {adjective} Twist
+{name}'s True Identity
+The {adjective} Revelation

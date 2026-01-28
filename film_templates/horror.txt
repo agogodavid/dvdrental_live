@@ -1,15 +1,48 @@
-The {noun} in {location}
-{name} Returns
-The {adjective} {noun}
-Curse of the {noun}
-The {noun} Awakens
-Dark {noun}
-Nightmare at {location}
-The {adjective} Dead
-Evil {noun}
-The {noun} from {location}
+The {adjective} Scream
+Horror in {location}
+The Night {name} {verb}
+The {adjective} Terror
 Haunted {noun}
-Possession
-The Last {noun}
-Shadows {verb}
-The {adjective} Entity
+The {adjective} Mansion
+Shadows in {location}
+The {adjective} Darkness
+Creeping {noun}
+The {adjective} Dread
+The Creature from {location}
+The {adjective} Monster
+Hidden Horrors
+The {adjective} Secret
+They Came at Night
+The {adjective} Invasion
+Possessed {noun}
+The {adjective} Control
+Demonic {noun}
+The {adjective} Curse
+Raising the Dead
+The {adjective} Ritual
+Evil Awakens
+The {adjective} Rise
+The Haunting
+The {adjective} Presence
+Supernatural {noun}
+The {adjective} Force
+Unseen {noun}
+The {adjective} Terror
+When {name} {verb}
+The {adjective} Doom
+Last Breath
+The {adjective} End
+Final Night
+The {adjective} Countdown
+Escape or Die
+The {adjective} Choice
+Running from {noun}
+The {adjective} Chase
+Trapped in {location}
+The {adjective} Nightmare
+Can't Wake Up
+The {adjective} Prison
+Death Comes {adjective}
+The {adjective} Reaper
+Survive the {noun}
+The {adjective} Battle

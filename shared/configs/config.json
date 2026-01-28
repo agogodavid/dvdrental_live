@@ -1,0 +1,80 @@
+{
+  "mysql": {
+    "host": "localhost",
+    "user": "root",
+    "password": "root",
+    "database": "dvdrental_live"
+  },
+  "simulation": {
+    "start_date": "2001-12-30",
+    "initial_weeks": 14
+  },
+  "generation": {
+    "films_count": 500,
+    "stores_count": 2,
+    "initial_customers": 100,
+    "weekly_new_customers": 70,
+    "base_weekly_transactions": 300,
+    "customer_churn_after_weeks": 5,
+    "churn_rate": 0.4,
+    "loyal_customer_rate": 0.15,
+    "rental_duration_min": 3,
+    "rental_duration_max": 7,
+    "spike_day_probability": 0.05,
+    "spike_day_multiplier": 4,
+    "rental_distribution": {
+      "enabled": true,
+      "type": "power_law",
+      "alpha": 1.0,
+      "description": "Power law (Zipfian) distribution for film rental frequency. alpha=1.0 creates 80/20 pattern where top 20% of films get 80% of rentals. Increase alpha (e.g., 1.5) for more extreme distribution."
+    },
+    "new_movie_boost": {
+      "enabled": true,
+      "days_to_boost": 40,
+      "boost_factor": 3.0,
+      "boost_percentage": 10,
+      "description": "New movie boost: only the top boost_percentage of new films (by film_id) released within days_to_boost get a weight multiplier (boost_factor). This reflects reality where not all new releases are equally popular. Example: 40% means ~40% of new films get 2x boost for 40 days, then linearly decay. Others follow normal power law immediately."
+    }
+  },
+  "master_simulation": {
+    "total_weeks": 52,
+    "start_date": "2001-10-01",
+    "film_release_strategy": {
+      "_explanation": "TWO-PHASE STRATEGY: (1) Market releases every week represent films available in the market, (2) Hot category purchases on specific weeks represent selective purchasing decisions",
+      "market_weekly_releases": 20,
+      "market_weekly_releases_description": "Films released to market each week (added to film_releases table but NOT inventory). 20/week * 52 weeks = 1040 market releases annually",
+      "purchased_from_market_strategy": "hot_categories",
+      "purchased_from_market_description": "Selective purchasing from market based on hot_categories schedule - these represent purchasing decisions and are added to inventory",
+      "hot_category_rotation_weeks": 12,
+      "hot_categories": [
+        {"weeks": [0, 12, 24, 36, 48], "category": "Action", "priority": "high", "inventory_boost": 1.5, "purchase_per_release": 5, "note": "5 Action films purchased when this category is hot"},
+        {"weeks": [4, 16, 28, 40], "category": "Comedy", "priority": "medium", "inventory_boost": 1.2, "purchase_per_release": 4, "note": "4 Comedy films purchased when this category is hot"},
+        {"weeks": [8, 20, 32, 44], "category": "Drama", "priority": "medium", "inventory_boost": 1.2, "purchase_per_release": 5, "note": "5 Drama films purchased when this category is hot"}
+      ]
+    }
+  },
+  "inventory_purchasing": {
+    "strategy": "aggressive",
+    "aggressive": {
+      "description": "Aggressive inventory growth across all genres",
+      "inventory_per_film": [8, 12],
+      "diversification_factor": 1.0
+    },
+    "stable": {
+      "description": "Stable inventory growth with balanced genre distribution",
+      "inventory_per_film": [5, 8],
+      "diversification_factor": 0.8
+    },
+    "seasonal": {
+      "description": "Stable growth focused on seasonally appropriate genres",
+      "inventory_per_film": [4, 7],
+      "diversification_factor": 0.3,
+      "seasonal_preferences": {
+        "Q1": ["Drama", "Romance", "Comedy"],
+        "Q2": ["Action", "Sci-Fi", "Adventure"],
+        "Q3": ["Horror", "Thriller", "Action"],
+        "Q4": ["Family", "Animation", "Comedy"]
+      }
+    }
+  }
+}
