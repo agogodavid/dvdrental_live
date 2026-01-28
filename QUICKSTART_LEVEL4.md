@@ -4,7 +4,7 @@
 
 ```bash
 # Generate complete 10-year dataset with all advanced features
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 ```
 
 **Output:** `dvdrental_10year_advanced` database with:
@@ -21,13 +21,13 @@ python level_4_advanced_master/master_simulation.py
 ### Level 4 (Advanced Master - 10 Years)
 ```bash
 # Default run
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 
 # Custom database
-python level_4_advanced_master/master_simulation.py --database my_10year_db
+python level_4_advanced_master/adv_master_simulation.py --database my_10year_db
 
 # Override seasonality
-python level_4_advanced_master/master_simulation.py --season 50  # 50% boost
+python level_4_advanced_master/adv_master_simulation.py --season 50  # 50% boost
 ```
 
 ### Level 3 (Master Simulation - 5 Years)
@@ -90,7 +90,7 @@ python generator.py
 
 1. **Generate 10 years of data:**
    ```bash
-   python level_4_advanced_master/master_simulation.py
+   python level_4_advanced_master/adv_master_simulation.py
    ```
 
 2. **Connect and analyze:**

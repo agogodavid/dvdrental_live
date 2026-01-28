@@ -112,7 +112,7 @@ python level_3_master_simulation/master_simulation.py --database my_dvdrental_5y
 ### **Level 4: Advanced Master (10-Year Business Lifecycle)** ⭐
 **Purpose:** Complete enterprise-grade simulation with business lifecycle and advanced features  
 **Location:** `level_4_advanced_master/`  
-**Key File:** `master_simulation.py` - **THE DEFINITIVE 10-YEAR TOOL**
+**Key File:** `adv_master_simulation.py` - **THE DEFINITIVE 10-YEAR TOOL**
 
 **What You Get (Everything from Level 3 PLUS):**
 
@@ -211,13 +211,13 @@ Enhanced seasonal modeling with volatility:
 **Run:**
 ```bash
 # Generate 10 years of advanced data (default database: dvdrental_10year_advanced)
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 
 # Use custom database
-python level_4_advanced_master/master_simulation.py --database my_10year_data
+python level_4_advanced_master/adv_master_simulation.py --database my_10year_data
 
 # Override seasonality (50% boost across all months)
-python level_4_advanced_master/master_simulation.py --season 50
+python level_4_advanced_master/adv_master_simulation.py --season 50
 ```
 
 **Output:**
@@ -412,7 +412,7 @@ python level_3_master_simulation/master_simulation.py
 ### **For Complete 10-Year Simulation (Advanced):** ⭐
 ```bash
 # Level 4 is your definitive tool
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 ```
 
 ---

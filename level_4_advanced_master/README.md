@@ -81,7 +81,7 @@ Edit `../shared/configs/config_10year_advanced.json` to set:
 ### 2. Run Simulation
 ```bash
 # From workspace root or level_4_advanced_master directory
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 ```
 
 ### 3. Analyze Results
@@ -99,19 +99,19 @@ GROUP BY ar_status;
 
 ```bash
 # Default: loads config_10year_advanced.json, database 'dvdrental_10year_advanced'
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 
 # Override database name
-python level_4_advanced_master/master_simulation.py --database my_advanced_test
+python level_4_advanced_master/adv_master_simulation.py --database my_advanced_test
 
 # Use different config file
-python level_4_advanced_master/master_simulation.py --config config_custom.json
+python level_4_advanced_master/adv_master_simulation.py --config config_custom.json
 
 # Override with fixed seasonal boost (percentage)
-python level_4_advanced_master/master_simulation.py --season 40
+python level_4_advanced_master/adv_master_simulation.py --season 40
 
 # Combine arguments
-python level_4_advanced_master/master_simulation.py --database test_db --season 25
+python level_4_advanced_master/adv_master_simulation.py --database test_db --season 25
 ```
 
 ### Argument Reference
@@ -154,9 +154,11 @@ Creates advanced tracking tables:
 
 ```
 level_4_advanced_master/
-├── master_simulation.py             ← Main unified simulation (THE definitive tool)
-├── run_advanced_simulation.py       ← Legacy (deprecated, use master_simulation.py)
+├── adv_master_simulation.py         ← Main unified simulation (THE definitive tool)
 └── README.md                        ← This file
+
+archive/level_4_deprecated/
+└── run_advanced_simulation.py       ← Legacy (archived)
 
 ../shared/configs/
 ├── config_10year_advanced.json      ← Level 4 config (10 years, all features)
@@ -205,10 +207,10 @@ After running, you can analyze:
 
 ```bash
 # Run full advanced 10-year simulation (RECOMMENDED)
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 
 # Custom database
-python level_4_advanced_master/master_simulation.py --database my_10year_data
+python level_4_advanced_master/adv_master_simulation.py --database my_10year_data
 
 # View late fees summary
 mysql -u root -p dvdrental_10year_advanced -e "

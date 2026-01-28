@@ -8,7 +8,7 @@ A **4-level progressive learning system** for database design, data engineering,
 
 ```bash
 # Generate complete 10-year dataset with all advanced features
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 ```
 
 **What you get:**
@@ -45,7 +45,7 @@ Multi-year simulation with film releases and inventory strategies
 
 ### **Level 4: Advanced Master (10 Years)** ⭐
 ```bash
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 ```
 **Complete enterprise-grade business simulation** - THE DEFINITIVE TOOL
 
@@ -65,7 +65,7 @@ python level_4_advanced_master/master_simulation.py
 --config config_10year_advanced.json
 
 # Examples:
-python level_4_advanced_master/master_simulation.py --database my_10year_data
+python level_4_advanced_master/adv_master_simulation.py --database my_10year_data
 python level_2_incremental/incremental_update.py 5 --seasonal 30 --database dvdrental_live
 ```
 

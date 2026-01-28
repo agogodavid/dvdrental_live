@@ -3,13 +3,15 @@
 ## What Was Accomplished
 
 ### 1. Unified Master Simulation Created
-**File:** `level_4_advanced_master/master_simulation.py`
+**File:** `level_4_advanced_master/adv_master_simulation.py`
 
 Combined the best of:
 - `level_3_master_simulation/master_simulation.py` (film releases, inventory management)
 - `level_4_advanced_master/run_advanced_simulation.py` (business lifecycle, late fees, AR)
 
 Result: **ONE definitive script** for complete 10-year simulations.
+
+**Note:** The old `run_advanced_simulation.py` has been archived to `archive/level_4_deprecated/`
 
 ---
 
@@ -196,32 +198,32 @@ CREATE TABLE inventory_status (
 
 ### Basic Usage
 ```bash
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 ```
 Uses default config: `config_10year_advanced.json`  
 Creates database: `dvdrental_10year_advanced`
 
 ### Database Override
 ```bash
-python level_4_advanced_master/master_simulation.py --database my_10year_data
+python level_4_advanced_master/adv_master_simulation.py --database my_10year_data
 ```
 Uses custom database name instead of config default
 
 ### Seasonal Override
 ```bash
-python level_4_advanced_master/master_simulation.py --season 50
+python level_4_advanced_master/adv_master_simulation.py --season 50
 ```
 Applies +50% seasonal boost across all months (overrides config seasonality)
 
 ### Custom Config
 ```bash
-python level_4_advanced_master/master_simulation.py --config my_custom_config.json
+python level_4_advanced_master/adv_master_simulation.py --config my_custom_config.json
 ```
 Uses different configuration file
 
 ### Combined Arguments
 ```bash
-python level_4_advanced_master/master_simulation.py \
+python level_4_advanced_master/adv_master_simulation.py \
   --database production_10year \
   --season 0 \
   --config config_no_seasonality.json
@@ -350,7 +352,7 @@ LEVEL 4 ADVANCED SIMULATION SUCCESSFUL!
 
 **Recommendation:** Run full 10-year simulation to validate end-to-end:
 ```bash
-python level_4_advanced_master/master_simulation.py
+python level_4_advanced_master/adv_master_simulation.py
 ```
 
 ---
@@ -381,7 +383,7 @@ python level_4_advanced_master/master_simulation.py
 
 **You now have ONE definitive tool for 10-year DVD rental simulations:**
 
-`python level_4_advanced_master/master_simulation.py`
+`python level_4_advanced_master/adv_master_simulation.py`
 
 This script:
 - Combines all Level 3 features (film releases, inventory management)
@@ -396,5 +398,8 @@ This script:
 - Level 2: Incremental growth
 - Level 3: Multi-year foundation
 - Level 4: Complete business simulation (THE definitive tool)
+
+**File renamed:** `master_simulation.py` → `adv_master_simulation.py`  
+**Old file archived:** `run_advanced_simulation.py` → `archive/level_4_deprecated/`
 
 All code committed and pushed to main branch. ✅
