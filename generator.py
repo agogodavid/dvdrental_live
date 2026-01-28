@@ -99,7 +99,25 @@ class DVDRentalDataGenerator:
     def create_schema(self, schema_file: str = 'schema.sql'):
         """Create tables from schema file"""
         try:
-            with open(schema_file, 'r') as f:
+            # Try multiple locations for the schema file
+            schema_paths = [
+                schema_file,  # Current directory
+                os.path.join('level_1_basic', 'schema_base.sql'),  # Level 1 schema
+                os.path.join(os.path.dirname(__file__), 'level_1_basic', 'schema_base.sql'),  # Absolute path to level 1
+            ]
+            
+            schema_path = None
+            for path in schema_paths:
+                if os.path.exists(path):
+                    schema_path = path
+                    logger.info(f"Found schema at: {path}")
+                    break
+            
+            if not schema_path:
+                logger.error(f"Schema file not found in: {schema_paths}")
+                raise FileNotFoundError(f"Cannot find schema file")
+            
+            with open(schema_path, 'r') as f:
                 schema = f.read()
             
             # Split by semicolon and execute each statement
@@ -154,8 +172,13 @@ class DVDRentalDataGenerator:
         self.conn.commit()
         logger.info("Base data seeded successfully")
     
-    def seed_films(self, count: int = 100):
-        """Seed films"""
+    def seed_films(self, count: int = 100, start_date=None):
+        """Seed films
+        
+        Args:
+            count: Number of films to generate
+            start_date: Optional start date for film generation (for realistic film years)
+        """
         logger.info(f"Seeding {count} films...")
         
         # Generate diverse, unique film titles

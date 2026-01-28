@@ -63,12 +63,27 @@ class AdvancedSimulationConfig:
         self.simulation_config = self.config['simulation']
         self.generation_config = self.config['generation']
         
-        # Business lifecycle phases
-        self.business_phases = self.generation_config['business_lifecycle']
-        self.volume_modifiers = self.generation_config['volume_modifiers']
-        self.customer_segments = self.generation_config['customer_segments']
-        self.reactivation_config = self.generation_config['reactivation']
-        self.plateau_config = self.generation_config['plateau']
+        # Business lifecycle phases (with defaults for base configs)
+        self.business_phases = self.generation_config.get('business_lifecycle', {
+            'growth_phase_weeks': 104,
+            'plateau_phase_weeks': 208,
+            'decline_phase_weeks': 104,
+            'reactivation_phase_weeks': 104
+        })
+        self.volume_modifiers = self.generation_config.get('volume_modifiers', {
+            'growth_factor': 0.025,
+            'plateau_factor': 0.0,
+            'decline_factor': -0.005,
+            'reactivation_factor': 0.015
+        })
+        self.customer_segments = self.generation_config.get('customer_segments', {})
+        self.reactivation_config = self.generation_config.get('reactivation', {'enable_reactivation': False})
+        self.plateau_config = self.generation_config.get('plateau', {
+            'start_week': 104,
+            'duration_weeks': 208,
+            'plateau_multiplier': 1.0,
+            'seasonal_volatility': 0.1
+        })
         
         # Timeline
         self.start_date = datetime.strptime(self.simulation_config['start_date'], '%Y-%m-%d').date()
@@ -554,6 +569,199 @@ def add_incremental_weeks(config: AdvancedSimulationConfig, num_weeks: int, curr
         raise
 
 
+def process_late_fees(config: AdvancedSimulationConfig, simulation_date: date = None) -> int:
+    """Calculate and record late fees for overdue rentals"""
+    if not config.generation_config.get('advanced_features', {}).get('enable_late_fees', False):
+        return 0
+    
+    try:
+        conn = mysql.connector.connect(
+            host=config.mysql_config['host'],
+            user=config.mysql_config['user'],
+            password=config.mysql_config['password'],
+            database=config.mysql_config['database']
+        )
+        cursor = conn.cursor()
+        
+        if simulation_date is None:
+            simulation_date = date.today()
+        
+        late_fee_config = config.generation_config['advanced_features']['late_fees']
+        daily_rate = late_fee_config['daily_rate']
+        
+        # Find rentals that are overdue and don't have late fees yet
+        cursor.execute("""
+            SELECT r.rental_id, r.customer_id, r.inventory_id, r.rental_date, r.return_date
+            FROM rental r
+            LEFT JOIN late_fees lf ON r.rental_id = lf.rental_id
+            WHERE r.return_date IS NULL 
+            AND DATEDIFF(%s, r.rental_date) > r.rental_duration + 1
+            AND lf.rental_id IS NULL
+            LIMIT 1000
+        """, (simulation_date,))
+        
+        overdue_rentals = cursor.fetchall()
+        late_fees_records = []
+        
+        for rental_id, customer_id, inventory_id, rental_date, _ in overdue_rentals:
+            days_overdue = (simulation_date - rental_date).days - 3  # Assuming 3-day default rental
+            if days_overdue > 0:
+                total_fee = days_overdue * daily_rate
+                late_fees_records.append((
+                    rental_id, customer_id, inventory_id, days_overdue, 
+                    daily_rate, total_fee, simulation_date, False, None, None
+                ))
+        
+        if late_fees_records:
+            cursor.executemany("""
+                INSERT INTO late_fees 
+                (rental_id, customer_id, inventory_id, days_overdue, daily_rate, total_fee, fee_date, paid, paid_date, paid_amount)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, late_fees_records)
+            conn.commit()
+            logger.debug(f"  Late fees recorded: {len(late_fees_records)}")
+        
+        cursor.close()
+        conn.close()
+        return len(late_fees_records)
+        
+    except Exception as e:
+        logger.debug(f"Late fees processing error: {e}")
+        return 0
+
+
+def update_customer_ar(config: AdvancedSimulationConfig, simulation_date: date = None) -> int:
+    """Update customer accounts receivable balances"""
+    if not config.generation_config.get('advanced_features', {}).get('enable_ar_tracking', False):
+        return 0
+    
+    try:
+        conn = mysql.connector.connect(
+            host=config.mysql_config['host'],
+            user=config.mysql_config['user'],
+            password=config.mysql_config['password'],
+            database=config.mysql_config['database']
+        )
+        cursor = conn.cursor()
+        
+        if simulation_date is None:
+            simulation_date = date.today()
+        
+        # Create customer_ar if doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS customer_ar (
+                ar_id INT AUTO_INCREMENT PRIMARY KEY,
+                customer_id INT NOT NULL UNIQUE,
+                total_owed DECIMAL(10,2) DEFAULT 0,
+                total_paid DECIMAL(10,2) DEFAULT 0,
+                ar_balance DECIMAL(10,2) DEFAULT 0,
+                last_payment_date DATETIME,
+                days_past_due INT,
+                ar_status ENUM('current', '30_days', '60_days', '90_days_plus') DEFAULT 'current',
+                ar_notes VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
+            ) ENGINE=InnoDB
+        """)
+        
+        # Update AR for all customers with late fees
+        cursor.execute("""
+            INSERT INTO customer_ar (customer_id, total_owed, ar_balance)
+            SELECT DISTINCT c.customer_id, 0, 0 FROM customer c
+            LEFT JOIN customer_ar ca ON c.customer_id = ca.customer_id
+            WHERE ca.ar_id IS NULL
+            LIMIT 5000
+        """)
+        
+        # Update balances based on late fees
+        cursor.execute("""
+            UPDATE customer_ar ca
+            SET 
+                total_owed = COALESCE((
+                    SELECT COALESCE(SUM(total_fee), 0)
+                    FROM late_fees lf
+                    WHERE lf.customer_id = ca.customer_id AND lf.paid = FALSE
+                ), 0),
+                ar_balance = COALESCE((
+                    SELECT COALESCE(SUM(total_fee), 0)
+                    FROM late_fees lf
+                    WHERE lf.customer_id = ca.customer_id AND lf.paid = FALSE
+                ), 0),
+                days_past_due = COALESCE((
+                    SELECT MAX(days_overdue)
+                    FROM late_fees lf
+                    WHERE lf.customer_id = ca.customer_id AND lf.paid = FALSE
+                ), 0),
+                ar_status = CASE
+                    WHEN COALESCE((SELECT MAX(days_overdue) FROM late_fees lf WHERE lf.customer_id = ca.customer_id AND lf.paid = FALSE), 0) >= 90 THEN '90_days_plus'
+                    WHEN COALESCE((SELECT MAX(days_overdue) FROM late_fees lf WHERE lf.customer_id = ca.customer_id AND lf.paid = FALSE), 0) >= 60 THEN '60_days'
+                    WHEN COALESCE((SELECT MAX(days_overdue) FROM late_fees lf WHERE lf.customer_id = ca.customer_id AND lf.paid = FALSE), 0) >= 30 THEN '30_days'
+                    ELSE 'current'
+                END
+            WHERE COALESCE((SELECT COALESCE(SUM(total_fee), 0) FROM late_fees lf WHERE lf.customer_id = ca.customer_id AND lf.paid = FALSE), 0) > 0
+        """)
+        
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        return 1
+        
+    except Exception as e:
+        logger.debug(f"Customer AR update error: {e}")
+        return 0
+
+
+def update_inventory_status(config: AdvancedSimulationConfig, simulation_date: date = None) -> int:
+    """Update inventory status based on rental activity"""
+    if not config.generation_config.get('advanced_features', {}).get('enable_inventory_status_tracking', False):
+        return 0
+    
+    try:
+        conn = mysql.connector.connect(
+            host=config.mysql_config['host'],
+            user=config.mysql_config['user'],
+            password=config.mysql_config['password'],
+            database=config.mysql_config['database']
+        )
+        cursor = conn.cursor()
+        
+        if simulation_date is None:
+            simulation_date = date.today()
+        
+        # Get currently rented inventory
+        cursor.execute("""
+            SELECT DISTINCT i.inventory_id FROM inventory i
+            INNER JOIN rental r ON i.inventory_id = r.inventory_id
+            WHERE r.return_date IS NULL
+        """)
+        
+        rented_ids = [row[0] for row in cursor.fetchall()]
+        status_updates = []
+        
+        for inv_id in rented_ids[:500]:  # Batch process
+            status_updates.append(('rented', simulation_date, None, inv_id))
+        
+        if status_updates:
+            cursor.executemany("""
+                INSERT INTO inventory_status (status, status_date, notes, inventory_id)
+                VALUES (%s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                status = VALUES(status),
+                status_date = VALUES(status_date)
+            """, status_updates)
+            conn.commit()
+        
+        cursor.close()
+        conn.close()
+        return len(status_updates)
+        
+    except Exception as e:
+        logger.debug(f"Inventory status update error: {e}")
+        return 0
+
+
 def display_simulation_plan(config: AdvancedSimulationConfig):
     """Display the simulation plan"""
     logger.info("=" * 80)
@@ -602,7 +810,7 @@ def main():
     
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Advanced DVD Rental Simulation')
-    parser.add_argument('--config', type=str, default='config.json', 
+    parser.add_argument('--config', type=str, default='config_10year_advanced.json', 
                         help='Configuration file to use')
     parser.add_argument('--database', type=str, help='Database name to override config')
     parser.add_argument('--season', type=float, help='Seasonal boost percentage (e.g., 50 for 50% boost, 0 for no seasonality)')
@@ -661,6 +869,12 @@ def main():
             
             added_weeks = add_incremental_weeks(config, weeks_to_add, current_sim_week)
             weeks_added += added_weeks
+            
+            # Process advanced features at the end of each batch
+            logger.debug("  Processing advanced features...")
+            late_fees_processed = process_late_fees(config, current_date)
+            ar_updated = update_customer_ar(config, current_date)
+            inventory_updated = update_inventory_status(config, current_date)
             
             progress = (weeks_added / remaining_weeks) * 100
             logger.info(f"   Progress: {progress:.1f}% ({weeks_added}/{remaining_weeks} weeks)")
@@ -732,6 +946,36 @@ def main():
         """)
         user_segments = cursor.fetchall()
         
+        # Get advanced features statistics
+        late_fees_total = 0
+        overdue_rentals = 0
+        ar_customers = 0
+        ar_total_owed = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM late_fees")
+            late_fees_count = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT SUM(total_fee), COUNT(DISTINCT rental_id) FROM late_fees WHERE paid = FALSE")
+            result = cursor.fetchone()
+            late_fees_total = result[0] if result[0] else 0
+            overdue_rentals = result[1] if result[1] else 0
+            
+            cursor.execute("SELECT COUNT(*), SUM(ar_balance) FROM customer_ar WHERE ar_balance > 0")
+            result = cursor.fetchone()
+            ar_customers = result[0] if result[0] else 0
+            ar_total_owed = result[1] if result[1] else 0
+            
+            cursor.execute("""
+                SELECT ar_status, COUNT(*)
+                FROM customer_ar
+                WHERE ar_balance > 0
+                GROUP BY ar_status
+            """)
+            ar_aging = cursor.fetchall()
+        except:
+            ar_aging = []
+        
         cursor.close()
         conn.close()
         
@@ -749,6 +993,19 @@ def main():
         logger.info(f"\n👥 Customer Segments:")
         for user_type, count, avg_rentals in user_segments:
             logger.info(f"   {user_type}: {count:,} customers (avg {avg_rentals:.1f} rentals each)")
+        
+        # Advanced features analytics
+        if config.generation_config.get('advanced_features', {}).get('enable_late_fees', False):
+            logger.info(f"\n💰 Late Fees & Accounts Receivable:")
+            logger.info(f"   Overdue Rentals: {overdue_rentals:,}")
+            logger.info(f"   Total Late Fees Owed: ${late_fees_total:,.2f}")
+            logger.info(f"   Customers with AR: {ar_customers:,}")
+            logger.info(f"   Total AR Balance: ${ar_total_owed:,.2f}")
+            
+            if ar_aging:
+                logger.info(f"   AR Aging Breakdown:")
+                for status, count in ar_aging:
+                    logger.info(f"      {status}: {count:,} customers")
         
         logger.info("\n" + "=" * 80)
         logger.info("ADVANCED SIMULATION SUCCESSFUL!")

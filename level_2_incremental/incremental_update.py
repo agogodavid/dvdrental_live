@@ -90,7 +90,7 @@ def add_incremental_week(config_file='config.json', num_weeks: int = 1, seasonal
     database_name = mysql_config.get('database', 'unknown')
     logger.info(f"Updating database: {database_name}")
     
-    generator = DVDRentalDataGenerator(mysql_config, config.get('generation', {}))
+    generator = DVDRentalDataGenerator(mysql_config)
     generator.seasonal_drift = seasonal_drift
     
     try:

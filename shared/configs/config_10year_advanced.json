@@ -69,6 +69,43 @@
     "rental_duration_max": 10,
     "spike_day_probability": 0.08,
     "spike_day_multiplier": 3,
+    "advanced_features": {
+      "enable_late_fees": true,
+      "enable_ar_tracking": true,
+      "enable_inventory_status_tracking": true,
+      "enable_seasonality": true,
+      "enable_customer_churn": true,
+      "late_fees": {
+        "daily_rate": 1.50,
+        "calculation_frequency_days": 1,
+        "overdue_threshold_days": 0
+      },
+      "seasonality": {
+        "winter_months": [11, 12, 1],
+        "winter_multiplier": 1.25,
+        "spring_months": [3, 4, 5],
+        "spring_multiplier": 1.10,
+        "summer_months": [6, 7, 8],
+        "summer_multiplier": 1.30,
+        "fall_months": [9, 10],
+        "fall_multiplier": 1.15,
+        "volatility": 0.05
+      },
+      "inventory_status": {
+        "damage_probability": 0.02,
+        "loss_probability": 0.01,
+        "maintenance_frequency": 0.03
+      },
+      "customer_behavior": {
+        "overdue_rental_probability": 0.08,
+        "max_simultaneous_rentals": {
+          "super_loyal": 10,
+          "loyal": 6,
+          "average": 4,
+          "occasional": 2
+        }
+      }
+    },
     "performance": {
       "batch_size": 1000,
       "commit_frequency": 5000,

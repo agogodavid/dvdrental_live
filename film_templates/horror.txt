@@ -12,7 +12,7 @@ The Creature from {location}
 The {adjective} Monster
 Hidden Horrors
 The {adjective} Secret
-They Came at Night
+They Came for Night{noun}
 The {adjective} Invasion
 Possessed {noun}
 The {adjective} Control
@@ -20,7 +20,7 @@ Demonic {noun}
 The {adjective} Curse
 Raising the Dead
 The {adjective} Ritual
-Evil Awakens
+Evil Awakens {location}
 The {adjective} Rise
 The Haunting
 The {adjective} Presence
