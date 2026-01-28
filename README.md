@@ -1,45 +1,85 @@
-# 🎓 DVD Rental Live - Organized
+# 🎓 DVD Rental Live - Progressive Database Simulation System
 
-A **progressive 4-level database system** for teaching database design, data engineering, business modeling, and advanced analytics.
+A **4-level progressive learning system** for database design, data engineering, business intelligence, and advanced analytics. From simple SQL fundamentals to sophisticated 10-year business lifecycle simulations.
 
-## Quick Start (Choose Your Level)
+---
 
-```bash
-# See everything at a glance
-cat docs/START_HERE.md
-
-# Level 1: Basic Generator (12 weeks of data)
-python level_1_basic/generator.py
-
-# Level 2: Add Incremental Weeks
-python level_2_incremental/incremental_update.py 4  # Add 4 weeks
-
-# Level 3: Master Simulation (10 years with film releases)
-cd level_3_master_simulation && python master_simulation.py
-
-# Level 4: Advanced Master (10 years with seasonality & business story)
-cd level_4_advanced_master && python run_advanced_simulation.py
-```
-
-## Common Arguments
-
-All Python scripts support these optional arguments:
+## 🚀 Quick Start: Level 4 (Recommended for 10-Year Simulations)
 
 ```bash
-# Override database name (use custom database instead of default)
-python generator.py --database my_custom_db
-
-# Control seasonal boost (percentage value)
-python master_simulation.py --season 50      # 50% boost
-python run_advanced_simulation.py --season 0 # No seasonality
-python generator.py --season 25              # 25% boost
-
-# Specify config file (Level 4 only)
-python run_advanced_simulation.py --config config_10year.json
-
-# Combine arguments
-python generator.py --database test_db --season 30
+# Generate complete 10-year dataset with all advanced features
+python level_4_advanced_master/master_simulation.py
 ```
+
+**What you get:**
+- 520 weeks (10 years) of transaction data (~200,000+ rentals)
+- Complete business lifecycle (growth → plateau → decline → reactivation)
+- Customer segmentation and churn modeling
+- Late fees and accounts receivable (AR) tracking
+- Inventory status management
+- Film releases and strategic inventory purchasing
+
+**📖 Read:** [QUICKSTART_LEVEL4.md](QUICKSTART_LEVEL4.md) | [LEVEL_ARCHITECTURE.md](LEVEL_ARCHITECTURE.md)
+
+---
+
+## 📚 All Levels
+
+### **Level 1: Basic Foundations**
+```bash
+python generator.py
+```
+Simple starter database for SQL learning (100 films, 200 customers, basic transactions)
+
+### **Level 2: Incremental Growth**
+```bash
+python level_2_incremental/incremental_update.py 10 --database dvdrental_live
+```
+Add weeks incrementally with growth multipliers and seasonal variations
+
+### **Level 3: Master Simulation (5 Years)**
+```bash
+python level_3_master_simulation/master_simulation.py
+```
+Multi-year simulation with film releases and inventory strategies
+
+### **Level 4: Advanced Master (10 Years)** ⭐
+```bash
+python level_4_advanced_master/master_simulation.py
+```
+**Complete enterprise-grade business simulation** - THE DEFINITIVE TOOL
+
+---
+
+## 🎯 Common Arguments (All Levels)
+
+```bash
+# Override database name
+--database my_custom_db
+
+# Control seasonality (percentage boost)
+--season 50      # 50% seasonal boost
+--season 0       # No seasonality
+
+# Level 4 specific: Custom config
+--config config_10year_advanced.json
+
+# Examples:
+python level_4_advanced_master/master_simulation.py --database my_10year_data
+python level_2_incremental/incremental_update.py 5 --seasonal 30 --database dvdrental_live
+```
+
+---
+
+## 📖 Documentation
+
+| Document | Purpose |
+|----------|---------|
+| **[QUICKSTART_LEVEL4.md](QUICKSTART_LEVEL4.md)** | Get started immediately with Level 4 |
+| **[LEVEL_ARCHITECTURE.md](LEVEL_ARCHITECTURE.md)** | Complete system overview and narrative |
+| [FILM_GENERATOR_README.md](FILM_GENERATOR_README.md) | Film generation system |
+| [MASTER_SIMULATION_GUIDE.md](MASTER_SIMULATION_GUIDE.md) | Level 3/4 deep dive |
+| [INVENTORY_QUICKSTART.md](INVENTORY_QUICKSTART.md) | Inventory management |
 
 ## Repository Structure
 
