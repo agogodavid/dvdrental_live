@@ -181,6 +181,23 @@ class DVDRentalDataGenerator:
         """
         logger.info(f"Seeding {count} films...")
         
+        # Calculate appropriate release year range based on start_date
+        if start_date:
+            # Films should be released before or at the simulation start date
+            # Generate films from 10-20 years before start_date up to start_date year
+            if isinstance(start_date, str):
+                from datetime import datetime
+                start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            current_year = start_date.year
+            year_min = max(1980, current_year - 20)  # Go back 20 years, but not before 1980
+            year_max = current_year  # Films up to the simulation start year
+        else:
+            # Fallback to a reasonable range
+            year_min = 1980
+            year_max = 2001  # Default to 2001 if no start_date provided
+        
+        logger.info(f"Generating films with release years {year_min}-{year_max}")
+        
         # Generate diverse, unique film titles
         film_adjectives = [
             'The', 'A', 'Silent', 'Crazy', 'Dark', 'Bright', 'Lost', 'Found', 'Hidden', 'Secret',
@@ -232,7 +249,7 @@ class DVDRentalDataGenerator:
                     used_titles.add(title)
                     break
             description = random.choice(descriptions)
-            release_year = random.randint(1980, 2023)
+            release_year = random.randint(year_min, year_max)
             language_id = random.randint(1, 5)
             rental_duration = random.randint(2, 7)
             rental_rate = round(random.uniform(2.99, 9.99), 2)
@@ -882,8 +899,13 @@ class DVDRentalDataGenerator:
         self.create_database()
         self.create_schema()
         self.seed_base_data()
-        self.seed_films(100, start_date=self.start_date)
-        self.create_stores_and_staff(2)
+        
+        # Get films_count and stores_count from config
+        films_count = self.config.get('generation', {}).get('films_count', 100)
+        stores_count = self.config.get('generation', {}).get('stores_count', 2)
+        
+        self.seed_films(films_count, start_date=self.start_date)
+        self.create_stores_and_staff(stores_count)
         self.create_inventory()
         logger.info("Database initialized and seeded successfully")
     

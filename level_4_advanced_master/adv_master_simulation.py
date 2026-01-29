@@ -331,7 +331,13 @@ def run_initial_setup(config: AdvancedSimulationConfig) -> Tuple[int, int]:
                        f"Seasonal: {seasonal_multiplier:.2f}x ({seasonal_pct:+.1f}%), "
                        f"Total expected: {expected_volume}")
             
-            generator = OptimizedLevel4Generator(config.mysql_config)
+            # Build full config dict for generator (needs mysql config at top level + nested sections)
+            generator_config = {
+                **config.mysql_config,  # host, user, password, database at top level
+                'simulation': config.simulation_config,
+                'generation': config.generation_config
+            }
+            generator = OptimizedLevel4Generator(generator_config)
             generator.connect()
             added = generator.add_week_of_transactions(week_start, week + 1)
             generator.disconnect()
@@ -409,20 +415,16 @@ def add_film_batch(config: AdvancedSimulationConfig, num_films: int, category_fo
         sys.path.insert(0, 'level_3_master_simulation/film_system')
         from film_generator import FilmGenerator
         
-        conn = mysql.connector.connect(
-            host=config.mysql_config['host'],
-            user=config.mysql_config['user'],
-            password=config.mysql_config['password'],
-            database=config.mysql_config['database']
-        )
-        
-        film_gen = FilmGenerator(conn)
+        # FilmGenerator expects mysql_config dict and creates its own connection
+        film_gen = FilmGenerator(config.mysql_config)
+        film_gen.connect()
         added = film_gen.add_film_batch(num_films, category_focus, description, sim_date, add_inventory)
+        film_gen.disconnect()
         
-        conn.close()
         return added
         
     except Exception as e:
+        logger.error(f"Failed to add films: {e}")
         logger.warning(f"Could not add films: {e}")
         return 0
 
@@ -431,19 +433,19 @@ def add_inventory_batch(config: AdvancedSimulationConfig, quantity: int,
                        description: str, date_purchased: date) -> int:
     """Add inventory for existing films"""
     try:
-        from enhanced_inventory_manager import EnhancedInventoryManager
+        import sys
+        sys.path.insert(0, 'level_3_master_simulation/inventory_system')
+        from inventory_manager import InventoryManager
         
-        conn = mysql.connector.connect(
-            host=config.mysql_config['host'],
-            user=config.mysql_config['user'],
-            password=config.mysql_config['password'],
-            database=config.mysql_config['database']
-        )
+        # InventoryManager expects full config dict with mysql key
+        inv_config = {'mysql': config.mysql_config}
+        inv_mgr = InventoryManager(inv_config)
+        inv_mgr.connect()
         
-        inv_mgr = EnhancedInventoryManager(conn)
-        added = inv_mgr.add_inventory(quantity, date_purchased, description)
+        added = inv_mgr.add_fixed_quantity(quantity, date_purchased=date_purchased)
+        logger.info(f"✓ Added {added} inventory items - {description}")
         
-        conn.close()
+        inv_mgr.disconnect()
         return added
         
     except Exception as e:
@@ -750,10 +752,13 @@ def add_incremental_weeks(config: AdvancedSimulationConfig, num_weeks: int,
     try:
         from level_4_advanced_master.optimized_level4_generator import OptimizedLevel4Generator
         
-        generator = OptimizedLevel4
-        from generator import DVDRentalDataGenerator
-        
-        generator = DVDRentalDataGenerator(config.mysql_config)
+        # Build full config dict for generator (needs mysql config at top level + nested sections)
+        generator_config = {
+            **config.mysql_config,  # host, user, password, database at top level
+            'simulation': config.simulation_config,
+            'generation': config.generation_config
+        }
+        generator = OptimizedLevel4Generator(generator_config)
         generator.connect()
         
         # Get current database status
@@ -1031,18 +1036,24 @@ def main():
         # Customer segmentation analysis
         cursor.execute("""
             SELECT 
-                CASE 
-                    WHEN COUNT(*) > 50 THEN 'Heavy Users'
-                    WHEN COUNT(*) > 20 THEN 'Regular Users'
-                    WHEN COUNT(*) > 5 THEN 'Occasional Users'
-                    ELSE 'Light Users'
-                END as user_type,
+                user_type,
                 COUNT(DISTINCT customer_id) as customer_count,
                 AVG(rental_count) as avg_rentals_per_customer
             FROM (
-                SELECT customer_id, COUNT(*) as rental_count
-                FROM rental
-                GROUP BY customer_id
+                SELECT 
+                    customer_id, 
+                    rental_count,
+                    CASE 
+                        WHEN rental_count > 50 THEN 'Heavy Users'
+                        WHEN rental_count > 20 THEN 'Regular Users'
+                        WHEN rental_count > 5 THEN 'Occasional Users'
+                        ELSE 'Light Users'
+                    END as user_type
+                FROM (
+                    SELECT customer_id, COUNT(*) as rental_count
+                    FROM rental
+                    GROUP BY customer_id
+                ) customer_counts
             ) customer_stats
             GROUP BY user_type
             ORDER BY customer_count DESC

@@ -38,9 +38,9 @@ class OptimizedLevel4Generator(DVDRentalDataGenerator):
     tracking and payment generation may be critical.
     """
     
-    def __init__(self, mysql_config, generation_config=None):
+    def __init__(self, config):
         """Initialize optimized generator"""
-        super().__init__(mysql_config, generation_config)
+        super().__init__(config)
         self.optimization_mode = "level4_high_performance"
         logger.info("Using Level 4 Optimized Generator (High Performance Mode)")
     

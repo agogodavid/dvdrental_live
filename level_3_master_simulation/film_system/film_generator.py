@@ -134,11 +134,9 @@ class FilmGenerator:
             lang_result = self.cursor.fetchone()
             language_id = lang_result[0] if lang_result else 1
             
-            # First, load templates from files to get all available categories
-            load_templates()
-            
+            # Templates are already loaded in FILM_TEMPLATES at module import
             # Ensure all template categories exist in the database
-            for template_cat in TEMPLATES.keys():
+            for template_cat in FILM_TEMPLATES.keys():
                 self.cursor.execute("SELECT category_id FROM category WHERE name = %s", (template_cat,))
                 cat_result = self.cursor.fetchone()
                 if not cat_result:

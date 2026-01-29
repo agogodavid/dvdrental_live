@@ -91,10 +91,12 @@ def load_config(config_file='config.json', override_database=None) -> dict:
     """
     # Try to find config file in multiple locations
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    workspace_root = os.path.dirname(script_dir)
     config_paths = [
         config_file,  # Current directory
+        os.path.join(workspace_root, config_file),  # Workspace root (PRIORITY)
         os.path.join(script_dir, config_file),  # Same directory as script
-        os.path.join(script_dir, '..', 'shared', 'configs', config_file),  # Shared configs
+        os.path.join(script_dir, '..', 'shared', 'configs', config_file),  # Shared configs (fallback)
     ]
     
     config_path = None
