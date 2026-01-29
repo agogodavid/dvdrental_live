@@ -281,7 +281,7 @@ def run_initial_setup(config: AdvancedSimulationConfig) -> Tuple[int, int]:
         )
         logger.info("Connected to MySQL successfully")
         
-        # Initialize database
+        # Initialize database (use base generator for initial setup)
         from generator import DVDRentalDataGenerator
         
         logger.info(f"Initializing database for start date: {config.start_date}")
@@ -307,7 +307,10 @@ def run_initial_setup(config: AdvancedSimulationConfig) -> Tuple[int, int]:
         conn.close()
         
         # Generate initial rental transactions (first few weeks)
-        logger.info("Generating initial rental transactions...")
+        # Use optimized generator for Level 4 performance
+        from level_4_advanced_master.optimized_level4_generator import OptimizedLevel4Generator
+        
+        logger.info("Generating initial rental transactions (Level 4 Optimized)...")
         initial_weeks = 30  # Start with 30 weeks
         
         for week in range(initial_weeks):
@@ -328,7 +331,7 @@ def run_initial_setup(config: AdvancedSimulationConfig) -> Tuple[int, int]:
                        f"Seasonal: {seasonal_multiplier:.2f}x ({seasonal_pct:+.1f}%), "
                        f"Total expected: {expected_volume}")
             
-            generator = DVDRentalDataGenerator(config.mysql_config)
+            generator = OptimizedLevel4Generator(config.mysql_config)
             generator.connect()
             added = generator.add_week_of_transactions(week_start, week + 1)
             generator.disconnect()
@@ -742,11 +745,12 @@ def add_incremental_weeks(config: AdvancedSimulationConfig, num_weeks: int,
     Includes:
     - Film releases aligned with market trends
     - Inventory additions based on business phase
-    - Volume modifiers from business lifecycle
-    - Seasonal multipliers
-    - Progress tracking every 10 weeks
+    - OPTIMIZED: Uses Level 4 optimized generator for performance at scale
     """
     try:
+        from level_4_advanced_master.optimized_level4_generator import OptimizedLevel4Generator
+        
+        generator = OptimizedLevel4
         from generator import DVDRentalDataGenerator
         
         generator = DVDRentalDataGenerator(config.mysql_config)
