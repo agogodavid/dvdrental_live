@@ -402,6 +402,8 @@ def add_film_batch(config: AdvancedSimulationConfig, num_films: int, category_fo
                    description: str, sim_date: date, add_inventory: bool = True) -> int:
     """Add a batch of new films to the database"""
     try:
+        import sys
+        sys.path.insert(0, 'level_3_master_simulation/film_system')
         from film_generator import FilmGenerator
         
         conn = mysql.connector.connect(
@@ -412,7 +414,7 @@ def add_film_batch(config: AdvancedSimulationConfig, num_films: int, category_fo
         )
         
         film_gen = FilmGenerator(conn)
-        added = film_gen.add_films(num_films, category_focus, add_inventory)
+        added = film_gen.add_film_batch(num_films, category_focus, description, sim_date, add_inventory)
         
         conn.close()
         return added
