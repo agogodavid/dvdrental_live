@@ -986,7 +986,12 @@ def main():
     if args.season is not None:
         logger.info(f"Seasonal boost: {args.season}%")
     
-    generator = DVDRentalDataGenerator(mysql_config, config_data.get('generation', {}))
+    # Merge generation config with start_date from simulation config
+    generation_config = config_data.get('generation', {})
+    if start_date:
+        generation_config['start_date'] = start_date
+    
+    generator = DVDRentalDataGenerator(mysql_config, generation_config)
     
     # Apply seasonal drift if provided
     if args.season is not None:
