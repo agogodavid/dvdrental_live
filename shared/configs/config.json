@@ -34,6 +34,11 @@
       "boost_factor": 3.0,
       "boost_percentage": 10,
       "description": "New movie boost: only the top boost_percentage of new films (by film_id) released within days_to_boost get a weight multiplier (boost_factor). This reflects reality where not all new releases are equally popular. Example: 40% means ~40% of new films get 2x boost for 40 days, then linearly decay. Others follow normal power law immediately."
+    },
+    "student_names": {
+      "enabled": false,
+      "names": [],
+      "description": "Set enabled=true and add student names to use them for actors and customers instead of default names. Example: ['Alice', 'Bob', 'Charlie', 'Diana', 'Ethan']"
     }
   },
   "master_simulation": {

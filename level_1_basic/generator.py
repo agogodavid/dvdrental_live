@@ -52,6 +52,63 @@ class DVDRentalDataGenerator:
         # Get power law exponent from config (for Zipfian distribution)
         self.zipfian_alpha = self.generation_config.get('rental_distribution', {}).get('alpha', 1.0)
         
+        # Extract all generation parameters from config
+        self.weekly_new_customers = self.generation_config.get('weekly_new_customers', 10)
+        self.base_weekly_transactions = self.generation_config.get('base_weekly_transactions', 500)
+        self.churn_after_weeks = self.generation_config.get('customer_churn_after_weeks', 5)
+        self.churn_rate = self.generation_config.get('churn_rate', 0.4)
+        self.loyal_customer_rate = self.generation_config.get('loyal_customer_rate', 0.15)
+        self.rental_duration_min = self.generation_config.get('rental_duration_min', 3)
+        self.rental_duration_max = self.generation_config.get('rental_duration_max', 7)
+        self.spike_day_probability = self.generation_config.get('spike_day_probability', 0.05)
+        self.spike_day_multiplier = self.generation_config.get('spike_day_multiplier', 4)
+        
+        # Film generation parameters
+        self.film_rental_rate_min = self.generation_config.get('film_rental_rate_min', 2.99)
+        self.film_rental_rate_max = self.generation_config.get('film_rental_rate_max', 9.99)
+        self.film_length_min = self.generation_config.get('film_length_min', 80)
+        self.film_length_max = self.generation_config.get('film_length_max', 180)
+        self.film_replacement_cost_min = self.generation_config.get('film_replacement_cost_min', 10.0)
+        self.film_replacement_cost_max = self.generation_config.get('film_replacement_cost_max', 30.0)
+        
+        # Payment/return parameters
+        self.payment_amount_min = self.generation_config.get('payment_amount_min', 2.99)
+        self.payment_amount_max = self.generation_config.get('payment_amount_max', 15.99)
+        self.late_return_probability = self.generation_config.get('late_return_probability', 0.3)
+        self.late_days_max = self.generation_config.get('late_days_max', 14)
+        
+        # Transaction pattern parameters
+        self.week_shift_threshold = self.generation_config.get('week_shift_threshold', 8)
+        self.week_shift_duration = self.generation_config.get('week_shift_duration', 16)
+        
+        # Student names configuration
+        student_names_config = self.generation_config.get('student_names', {})
+        self.use_student_names = student_names_config.get('enabled', False)
+        self.student_names = student_names_config.get('names', [])
+        
+    def _get_first_and_last_names(self):
+        """Get first and last name lists, using student names if enabled"""
+        if self.use_student_names and self.student_names:
+            # Use student names for first names, and generic last names or student last initials
+            first_names = self.student_names
+            # Generate last names by adding common suffixes to student names
+            last_names = [f"{name}son" if name[-1] != 's' else f"{name}en" for name in self.student_names]
+            # Fallback: ensure we have enough names
+            if len(first_names) < 8:
+                default_first = ['James', 'Mary', 'Robert', 'Patricia', 'Michael', 'Linda', 'William', 'Barbara']
+                first_names = first_names + default_first[len(first_names):]
+            if len(last_names) < 8:
+                default_last = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis']
+                last_names = last_names + default_last[len(last_names):]
+            return first_names, last_names
+        else:
+            # Use default names
+            first_names = ['James', 'Mary', 'Robert', 'Patricia', 'Michael', 'Linda', 'William', 'Barbara',
+                          'David', 'Elizabeth', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah']
+            last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
+                         'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas']
+            return first_names, last_names
+        
     def connect(self):
         """Establish MySQL connection"""
         try:
@@ -164,10 +221,7 @@ class DVDRentalDataGenerator:
         self.cursor.executemany("INSERT INTO category (name) VALUES (%s)", categories)
         
         # Actors (100 sample actors)
-        first_names = ['James', 'Mary', 'Robert', 'Patricia', 'Michael', 'Linda', 'William', 'Barbara',
-                      'David', 'Elizabeth', 'Richard', 'Susan', 'Joseph', 'Jessica', 'Thomas', 'Sarah']
-        last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
-                     'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas']
+        first_names, last_names = self._get_first_and_last_names()
         
         actors = [(random.choice(first_names), random.choice(last_names)) for _ in range(100)]
         self.cursor.executemany("INSERT INTO actor (first_name, last_name) VALUES (%s, %s)", actors)
@@ -250,10 +304,10 @@ class DVDRentalDataGenerator:
             # Generate films from 10 years before simulation to 1 year before
             release_year = random.randint(year_min, year_max)
             language_id = random.randint(1, 5)
-            rental_duration = random.randint(2, 7)
-            rental_rate = round(random.uniform(2.99, 9.99), 2)
-            length = random.randint(80, 180)
-            replacement_cost = round(random.uniform(10.0, 30.0), 2)
+            rental_duration = random.randint(self.rental_duration_min, self.rental_duration_max)
+            rental_rate = round(random.uniform(self.film_rental_rate_min, self.film_rental_rate_max), 2)
+            length = random.randint(self.film_length_min, self.film_length_max)
+            replacement_cost = round(random.uniform(self.film_replacement_cost_min, self.film_replacement_cost_max), 2)
             special_features = json.dumps(['Deleted Scenes', 'Commentaries'])
             
             films.append((title, description, release_year, language_id, rental_duration,
@@ -395,10 +449,10 @@ class DVDRentalDataGenerator:
         Shifts from weekend-heavy to weekday-heavy over time.
         0=Monday, 6=Sunday
         """
-        # First 8 weeks: weekend heavy (Friday-Sunday)
-        # After 8 weeks: gradual shift to weekday heavy
+        # First week_shift_threshold weeks: weekend heavy (Friday-Sunday)
+        # After threshold: gradual shift to weekday heavy
         
-        if weeks_elapsed < 8:
+        if weeks_elapsed < self.week_shift_threshold:
             # Weekends are busier: Fri(4): 0.15, Sat(5): 0.2, Sun(6): 0.15
             # Weekdays: Mon-Thu: 0.1 each
             distribution = {
@@ -411,8 +465,8 @@ class DVDRentalDataGenerator:
                 6: 0.15  # Sunday
             }
         else:
-            # After 8 weeks: shift to weekday heavy
-            progress = min((weeks_elapsed - 8) / 16, 1.0)  # Shift over 16 weeks
+            # After threshold: shift to weekday heavy
+            progress = min((weeks_elapsed - self.week_shift_threshold) / self.week_shift_duration, 1.0)
             base_weekday = 0.12 + (0.08 * progress)
             base_weekend = 0.15 - (0.05 * progress)
             
@@ -428,8 +482,10 @@ class DVDRentalDataGenerator:
         
         return distribution
     
-    def is_spike_day(self, date: datetime, spike_probability: float = 0.05) -> bool:
-        """Randomly determine if a day is a spike day (4x transactions)"""
+    def is_spike_day(self, date: datetime, spike_probability: float = None) -> bool:
+        """Randomly determine if a day is a spike day (multiplier x transactions)"""
+        if spike_probability is None:
+            spike_probability = self.spike_day_probability
         return random.random() < spike_probability
     
     def add_week_of_transactions(self, week_start_date, week_number: int):
@@ -443,8 +499,7 @@ class DVDRentalDataGenerator:
         logger.info(f"Adding transactions for week {week_number} starting {week_start_date}")
         
         # Determine number of new customers to add
-        new_customers = self.generation_config.get('weekly_new_customers', 10)
-        self.add_new_customers(week_number, new_customers)
+        self.add_new_customers(week_number, self.weekly_new_customers)
         
         # Get active customers for this week
         active_customers = self.get_active_customers(week_number)
@@ -453,12 +508,11 @@ class DVDRentalDataGenerator:
             return
         
         # Calculate transaction volume
-        base_volume = self.generation_config.get('base_weekly_transactions', 500)
         volume_growth = 1 + (week_number * 0.02)  # 2% growth per week
         seasonal_factor = 1 + (self.seasonal_drift / 100)  # Convert percentage to multiplier
-        expected_transactions = int(base_volume * volume_growth * seasonal_factor)
+        expected_transactions = int(self.base_weekly_transactions * volume_growth * seasonal_factor)
         
-        logger.info(f"Base volume: {base_volume}, Growth: {volume_growth:.2f}x, "
+        logger.info(f"Base volume: {self.base_weekly_transactions}, Growth: {volume_growth:.2f}x, "
                    f"Seasonal: {seasonal_factor:.2f}x ({self.seasonal_drift:+.1f}%), "
                    f"Total expected: {expected_transactions}")
         
@@ -478,9 +532,9 @@ class DVDRentalDataGenerator:
             base_count = int(expected_transactions / 7)
             day_transactions = int(base_count * day_distribution[day_of_week])
             
-            # Check for spike day (4x volume)
+            # Check for spike day (multiplier x volume)
             if self.is_spike_day(current_date):
-                day_transactions *= 4
+                day_transactions *= self.spike_day_multiplier
                 logger.info(f"Spike day detected on {current_date}: {day_transactions} transactions")
             
             # Generate transactions
@@ -528,8 +582,7 @@ class DVDRentalDataGenerator:
         address_ids = [row[0] for row in reversed(self.cursor.fetchall())]
         
         # Create customers
-        first_names = ['James', 'Mary', 'Robert', 'Patricia', 'Michael', 'Linda', 'William', 'Barbara']
-        last_names = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis']
+        first_names, last_names = self._get_first_and_last_names()
         
         create_date = self.start_date + timedelta(weeks=week_number-1)
         
@@ -551,8 +604,7 @@ class DVDRentalDataGenerator:
     
     def get_active_customers(self, week_number: int) -> List[int]:
         """Get customers active in this week (considering permanent churn)"""
-        # Churn: 40% of customers churn permanently after 5 weeks, 15% are always loyal
-        # Exception: First 8 weeks are ramp-up period with no churn (allow customer base to build)
+        # Churn configuration from config.json
         
         self.cursor.execute("""
             SELECT customer_id, DATEDIFF(CURDATE(), create_date) as days_since_creation
@@ -573,20 +625,20 @@ class DVDRentalDataGenerator:
             
             weeks_since_creation = days_since_creation // 7
             
-            # First 8 weeks: ramp-up period, accept ALL customers (no churn)
-            if week_number <= 8:
+            # First week_shift_threshold weeks: ramp-up period, accept ALL customers (no churn)
+            if week_number <= self.week_shift_threshold:
                 active.append(customer_id)
-            # After week 8: apply permanent churn logic
+            # After ramp-up: apply permanent churn logic
             else:
-                # 15% of customers are always loyal (never churn)
-                if random.random() < 0.15:
+                # loyal_customer_rate% of customers are always loyal (never churn)
+                if random.random() < self.loyal_customer_rate:
                     active.append(customer_id)
-                # For remaining 85%: after 5 weeks from creation, 40% churn permanently
-                elif weeks_since_creation < 5:
+                # For remaining: after churn_after_weeks weeks from creation, churn_rate% churn permanently
+                elif weeks_since_creation < self.churn_after_weeks:
                     active.append(customer_id)
                 else:
-                    # Only apply churn to customers older than 5 weeks
-                    if random.random() > 0.4:  # 60% stay, 40% churn
+                    # Only apply churn to customers older than churn_after_weeks
+                    if random.random() > self.churn_rate:  # (1 - churn_rate)% stay, churn_rate% churn
                         active.append(customer_id)
                     else:
                         # Mark as permanently churned
@@ -614,18 +666,19 @@ class DVDRentalDataGenerator:
         
         staff_id = random.choice(staff_ids)
         
-        # Rental duration 3-7 days, with bias towards shorter periods
-        rental_days = random.choices([3, 4, 5, 6, 7], weights=[0.3, 0.3, 0.2, 0.1, 0.1])[0]
+        # Rental duration with bias towards shorter periods
+        rental_days = random.choices(
+            list(range(self.rental_duration_min, self.rental_duration_max + 1)),
+            weights=[0.3, 0.3, 0.2, 0.1, 0.1][:self.rental_duration_max - self.rental_duration_min + 1]
+        )[0]
         
         # Return date logic - all rentals eventually get returned
-        # 70% return on time (within rental period)
-        # 30% return late (1-14 days late)
-        if random.random() < 0.7:
+        if random.random() < (1 - self.late_return_probability):
             # Return within rental period
             return_date = rental_date + timedelta(days=rental_days)
         else:
-            # Return late (1-14 days late)
-            late_days = random.randint(1, 14)
+            # Return late
+            late_days = random.randint(1, self.late_days_max)
             return_date = rental_date + timedelta(days=rental_days + late_days)
         
         return (rental_date, inventory_id, customer_id, return_date, staff_id)
@@ -659,7 +712,7 @@ class DVDRentalDataGenerator:
             if self.cursor.fetchone():
                 continue
             
-            amount = round(random.uniform(2.99, 15.99), 2)
+            amount = round(random.uniform(self.payment_amount_min, self.payment_amount_max), 2)
             payment_date = rental_date + timedelta(hours=random.randint(0, 23))
             payments.append((customer_id, staff_id, rental_id, amount, payment_date))
         
