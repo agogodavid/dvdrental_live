@@ -43,11 +43,13 @@ class DVDRentalDataGenerator:
         
         # Parse start_date from generation config
         start_date_str = self.generation_config.get('start_date', '2001-10-01')
+        logger.info(f"Loading start_date from config: {start_date_str}")
         if isinstance(start_date_str, str):
             from datetime import datetime as dt
             self.start_date = dt.strptime(start_date_str, '%Y-%m-%d').date()
         else:
             self.start_date = start_date_str
+        logger.info(f"Using start_date: {self.start_date}")
         
         # Get power law exponent from config (for Zipfian distribution)
         self.zipfian_alpha = self.generation_config.get('rental_distribution', {}).get('alpha', 1.0)
@@ -1031,6 +1033,8 @@ def main():
     start_date = simulation_config.get('start_date')
     initial_weeks = simulation_config.get('initial_weeks', 12)
     
+    logger.info(f"Simulation config start_date: {start_date}")
+    
     # Override database name if --database argument provided
     if args.database:
         mysql_config['database'] = args.database
@@ -1043,6 +1047,9 @@ def main():
     generation_config = config_data.get('generation', {})
     if start_date:
         generation_config['start_date'] = start_date
+        logger.info(f"Merged start_date into generation_config: {start_date}")
+    else:
+        logger.warning("No start_date found in simulation config!")
     
     generator = DVDRentalDataGenerator(mysql_config, generation_config)
     
